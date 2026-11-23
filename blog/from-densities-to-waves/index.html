@@ -1,0 +1,485 @@
+<!DOCTYPE html> <html> <head> <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <title> From densities to waves: one recipe for the geometries of flow matching | ICLR Blogposts 2027 </title> <meta name="author" content="ICLR Blog"> <meta name="description" content="Flow matching quietly assumes your data live in Euclidean space, but when each data point is itself a distribution the straight line and the L2 norm need replacing, and Wasserstein, the linear mixture and Fisher-Rao are the usual choices. We show that all three fall out of one recipe, a rule for how probability mass may change plus a price for each change, and watch the same two bumps slide or cross-fade under each. Run on complex amplitudes, the same recipe gives a fourth geometry, Fubini-Study, the only one with which a neural network can give a density zeros that survive its own small errors."> <meta name="keywords" content="machine-learning, ml, deep-learning, reinforcement-learning, icl# add your own keywords or leave empty"> <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; media-src 'self' https:; frame-src 'self' https:; connect-src 'self' https:;"> <style>
+  :root {
+    --max-content-width: 930px;
+  }
+</style> <link rel="stylesheet" href="/2027/assets/css/tailwind.css?v=50c64c15cbb9fd1ce6056fdb8bcb4b62"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css" integrity="sha256-MVopmdyC2tYTiJ8wlktf0uh0v4NgT+vNdyVFepi7Q0c=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.5/css/academicons.min.css" integrity="sha256-SzrCOBJbGVFMahewkgjwnApaV2+av1DwMAA+/QGLyZw=" crossorigin="anonymous"> <link defer rel="stylesheet" href="https://cdn.jsdelivr.net/npm/scholar-icons@1.0.3/css/scholar-icons.css" integrity="sha256-VY3hHVj/hNX3fYG6wtbA6TcKJQl7+FthzGSyIB64klY=" crossorigin="anonymous"> <link defer rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&amp;display=swap"> <link defer rel="stylesheet" href="/2027/assets/css/jekyll-pygments-themes-github.css?v=591dab5a4e56573bf4ef7fd332894c99" media="" id="highlight_theme_light"> <link rel="shortcut icon" href="/2027/assets/img/iclr_favicon.ico?v=0a8a3afdb0dbe139723b24dba3052a4f"> <link rel="apple-touch-icon" href="/2027/assets/img/iclr_favicon.ico?v=0a8a3afdb0dbe139723b24dba3052a4f"> <link rel="stylesheet" href="/2027/assets/css/main.css?v=3116ba77db9ee1581d05bb3e86fbf7f1"> <link rel="canonical" href="https://iclr-blogposts.github.io/2027/blog/from-densities-to-waves/"> <script src="/2027/assets/js/theme.js?v=5286c3e4c334d0ecb8fc0c40ff4fa7ec"></script> <link defer rel="stylesheet" href="/2027/assets/css/jekyll-pygments-themes-native.css?v=5847e5ed4a4568527aa6cfab446049ca" media="none" id="highlight_theme_dark"> <script>
+    initTheme();
+  </script> <link rel="stylesheet" href="/2027/assets/css/al-folio-distill.css?v=fb7196ec07cb5299d51b2cbdc69c23d7"> <script>
+  window.alFolioDistill = window.alFolioDistill || {};
+  window.alFolioDistill.templateLoader = {"url":"/2027/assets/js/distillpub/template.v2.js","integrity":"sha256-R5CDHO0C98TyAJss32l4ztqDUfAGDTtZ3Zs6qxMuJxo=","remote":false};
+</script> <script src="/2027/assets/js/distillpub/template.v2.js" integrity="sha256-R5CDHO0C98TyAJss32l4ztqDUfAGDTtZ3Zs6qxMuJxo="></script> <script src="/2027/assets/js/distillpub/transforms.v2.js" integrity="sha256-XYVZD1ZSuRCrJBEBl0nIPvWlo/u5tzmtyStFV7a/PTk="></script> <style type="text/css">
+        .table-scroll { overflow-x: auto; } iframe.fig { display: block; } /* figure heights by screen width, measured on the built site (2026-11-23); no script resizes them */ iframe.fig-setup { height: 627px; } iframe.fig-dict3 { height: 795px; } iframe.fig-simplex { height: 976px; } iframe.fig-bloch { height: 975px; } iframe.fig-dict4 { height: 1010px; } iframe.fig-samples { height: 941px; } iframe.fig-zeros { height: 1200px; } @media (min-width: 360px) { iframe.fig-setup { height: 571px; } iframe.fig-dict3 { height: 747px; } iframe.fig-simplex { height: 910px; } iframe.fig-bloch { height: 955px; } iframe.fig-dict4 { height: 964px; } iframe.fig-samples { height: 885px; } iframe.fig-zeros { height: 1110px; } } @media (min-width: 420px) { iframe.fig-setup { height: 571px; } iframe.fig-dict3 { height: 731px; } iframe.fig-simplex { height: 830px; } iframe.fig-bloch { height: 884px; } iframe.fig-dict4 { height: 946px; } iframe.fig-samples { height: 840px; } iframe.fig-zeros { height: 1018px; } } @media (min-width: 690px) { iframe.fig-setup { height: 318px; } iframe.fig-dict3 { height: 399px; } iframe.fig-dict4 { height: 532px; } iframe.fig-zeros { height: 658px; } iframe.fig-simplex { height: 552px; } } @media (min-width: 700px) { iframe.fig-setup { height: 318px; } iframe.fig-dict3 { height: 399px; } iframe.fig-simplex { height: 552px; } iframe.fig-bloch { height: 827px; } iframe.fig-dict4 { height: 532px; } iframe.fig-samples { height: 744px; } iframe.fig-zeros { height: 658px; } } @media (min-width: 748px) { iframe.fig-samples { height: 380px; } iframe.fig-bloch { height: 541px; } } @media (min-width: 768px) { iframe.fig-setup { height: 545px; } iframe.fig-dict3 { height: 669px; } iframe.fig-simplex { height: 769px; } iframe.fig-bloch { height: 827px; } iframe.fig-dict4 { height: 884px; } iframe.fig-samples { height: 761px; } iframe.fig-zeros { height: 879px; } } @media (min-width: 1000px) { iframe.fig-setup { height: 318px; } iframe.fig-dict3 { height: 399px; } iframe.fig-simplex { height: 499px; } iframe.fig-bloch { height: 541px; } iframe.fig-dict4 { height: 514px; } iframe.fig-samples { height: 371px; } iframe.fig-zeros { height: 621px; } } @media (min-width: 1200px) { iframe.fig-setup { height: 318px; } iframe.fig-dict3 { height: 390px; } iframe.fig-simplex { height: 482px; } iframe.fig-bloch { height: 541px; } iframe.fig-dict4 { height: 477px; } iframe.fig-samples { height: 335px; } iframe.fig-zeros { height: 550px; } }
+
+      </style> </head> <body> <d-front-matter> <script async type="text/json">
+      {
+            "title": "From densities to waves: one recipe for the geometries of flow matching",
+            "description": "Flow matching quietly assumes your data live in Euclidean space, but when each data point is itself a distribution the straight line and the L2 norm need replacing, and Wasserstein, the linear mixture and Fisher-Rao are the usual choices. We show that all three fall out of one recipe, a rule for how probability mass may change plus a price for each change, and watch the same two bumps slide or cross-fade under each. Run on complex amplitudes, the same recipe gives a fourth geometry, Fubini-Study, the only one with which a neural network can give a density zeros that survive its own small errors.",
+            "published": "April 30, 2027",
+            "authors": [
+              
+              {
+                "author": "Anonymous",
+                "authorURL": "",
+                "affiliations": [
+                  {
+                    "name": "",
+                    "url": ""
+                  }
+                ]
+              }
+              
+            ],
+            "katex": {
+              "delimiters": [
+                {
+                  "left": "$",
+                  "right": "$",
+                  "display": false
+                },
+                {
+                  "left": "$$",
+                  "right": "$$",
+                  "display": true
+                }
+              ]
+            }
+          }
+    </script> </d-front-matter> <header> <nav id="navbar" class="navbar navbar-light navbar-expand-sm fixed-top" role="navigation"> <div class="container"> <a class="navbar-brand title font-weight-lighter" href="/2027/"> ICLR Blogposts 2027 </a> <button class="navbar-toggler collapsed navbar-toggler-main" type="button" data-nav-toggle="navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar top-bar"></span> <span class="icon-bar middle-bar"></span> <span class="icon-bar bottom-bar"></span> </button> <div class="collapse navbar-collapse navbar-collapse-main" id="navbarNav"> <ul class="navbar-nav navbar-menu-list flex-nowrap"> <li class="nav-item "> <a class="nav-link" href="/2027/about/">about </a> </li> <li class="nav-item "> <a class="nav-link" href="/2027/call/">call for blogposts </a> </li> <li class="nav-item "> <a class="nav-link" href="/2027/submitting/">submitting </a> </li> <li class="nav-item "> <a class="nav-link" href="/2027/reviewing/">reviewing </a> </li> <li class="nav-item dropdown "> <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-nav-dropdown-toggle="true" aria-haspopup="true" aria-expanded="false">past iterations </a> <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown"> <a class="dropdown-item " href="https://iclr-blogposts.github.io/2027/"><strong>2027</strong></a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="https://iclr-blogposts.github.io/2026/">2026</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="https://iclr-blogposts.github.io/2025/">2025</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="https://iclr-blogposts.github.io/2024/">2024</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="https://iclr-blogposts.github.io/2023/">2023</a> <div class="dropdown-divider"></div> <a class="dropdown-item " href="https://iclr-blog-track.github.io/home/" rel="external nofollow noopener" target="_blank">2022</a> </div> </li> <li class="nav-item"> <button id="search-toggle" type="button" title="Search" aria-label="Open search"> <span class="nav-link">ctrl k <i class="fa-solid fa-magnifying-glass"></i></span> </button> </li> <li class="toggle-container"> <button id="light-toggle" type="button" title="Change theme" aria-label="Change color theme"> <i class="fa-half-sun-moon" id="light-toggle-system"></i> <i class="fa-solid fa-moon" id="light-toggle-dark"></i> <i class="fa-solid fa-sun" id="light-toggle-light"></i> </button> </li> </ul> </div> </div> </nav> <progress id="progress" value="0"> <div class="progress-container"> <span class="progress-bar"></span> </div> </progress> </header> <div class="post distill"> <d-title> <h1>From densities to waves: one recipe for the geometries of flow matching</h1> <p>Flow matching quietly assumes your data live in Euclidean space, but when each data point is itself a distribution the straight line and the L2 norm need replacing, and Wasserstein, the linear mixture and Fisher-Rao are the usual choices. We show that all three fall out of one recipe, a rule for how probability mass may change plus a price for each change, and watch the same two bumps slide or cross-fade under each. Run on complex amplitudes, the same recipe gives a fourth geometry, Fubini-Study, the only one with which a neural network can give a density zeros that survive its own small errors.</p> </d-title> <d-byline></d-byline> <d-article> <d-contents> <nav class="l-text figcaption"> <h3>Contents</h3> <div> <a href="#flow-matching-is-euclidean-flow-matching">Flow matching is Euclidean flow matching</a> </div> <div> <a href="#flow-matching-between-distributions">Flow matching between distributions</a> </div> <div> <a href="#a-running-example">A running example</a> </div> <div> <a href="#transport-gives-wasserstein">Transport gives Wasserstein</a> </div> <div> <a href="#birth-and-death-give-the-mixture">Birth and death give the mixture</a> </div> <div> <a href="#fisher-s-price-gives-fisher-rao">Fisher's price gives Fisher-Rao</a> </div> <div> <a href="#an-amplitude-gives-fubini-study">An amplitude gives Fubini-Study</a> </div> <div> <a href="#fisher-rao-is-the-part-the-density-sees">Fisher-Rao is the part the density sees</a> </div> <ul> <li> <a href="#two-points-the-bloch-sphere">Two points, the Bloch sphere</a> </li> </ul> <div> <a href="#geodesics-side-by-side">Geodesics, side by side</a> </div> <div> <a href="#the-phase-is-invisible-to-samples">The phase is invisible to samples</a> </div> <div> <a href="#geometry-and-representation">Geometry and representation</a> </div> <div> <a href="#the-dictionary">The dictionary</a> </div> <div> <a href="#other-rules-and-prices">Other rules and prices</a> </div> <div> <a href="#which-geometry-for-which-data">Which geometry for which data</a> </div> </nav> </d-contents> <h2 id="flow-matching-is-euclidean-flow-matching">Flow matching is Euclidean flow matching</h2> <p>Flow matching<d-cite key="lipman2023flow"></d-cite> trains a vector field \(v_\theta\) to transform a source distribution to a data distribution. In its standard form it draws a source point \(x_0\), a data point \(x_1\) and a time \(t \sim U[0,1]\), joins the two points by a straight line, and regresses \(v_\theta\) onto the line’s velocity:</p> \[\mathcal L(\theta) = \mathbb E_{t,\,x_0,\,x_1}\, \parallel v_\theta(x_t, t) - (x_1 - x_0) \parallel^2,\] \[x_t = (1-t)\,x_0 + t\,x_1 .\] <p>Two choices in this loss are Euclidean: the interpolant is a chord, the straight line through the ambient space, and the error is measured in the \(L^2\) norm. Riemannian flow matching<d-cite key="chen2024riemannian"></d-cite> keeps the form of the loss and replaces both on a manifold with metric \(g\). The chord becomes the geodesic, and the \(L^2\) norm becomes the metric at the current point:</p> \[\mathcal L(\theta) = \mathbb E_{t,\,x_0,\,x_1}\, \parallel v_\theta(x_t, t) - \dot x_t \parallel^2_{g(x_t)},\] \[x_t = \exp_{x_0}\!\big(t \log_{x_0} x_1\big), \qquad \dot x_t = \frac{\log_{x_t} x_1}{1-t}.\] <p>Here \(\log_x y\) is the initial velocity of the geodesic from \(x\) to \(y\), scaled so that its length is their distance, and \(\exp_x\) walks along the geodesic with a given initial velocity. These are the exponential and logarithm maps of the manifold, not the elementwise functions: in Euclidean space \(\exp_x(v) = x + v\) and \(\log_x y = y - x\), which gives back the first loss. A geometry enters the loss through two objects: <strong>the interpolant</strong> \(x_t\) and <strong>the norm</strong> \(\lVert\cdot\rVert_{g}\). They are not equally important. Because \(g\) depends only on \(x_t\), the best \(v_\theta\) is \(\mathbb E[\dot x_t \mid x_t]\) whatever the norm, so the norm only reweights the regression. The interpolant decides what is learned.</p> <h2 id="flow-matching-between-distributions">Flow matching between distributions</h2> <p>In this post every data point \(x\) is itself a distribution \(\mu\). For categorical data with \(K\) classes, \(\mu\) is a vector of \(K\) probabilities, the source can be a uniformly random such vector, and \(v_\theta\) outputs a change \(\delta\mu\) whose entries sum to zero. In Fisher and Dirichlet flow matching the data are one-hot vectors, the corners of the simplex, and only the path between them passes through general distributions; statistical-manifold and Wasserstein flow matching also take data points that are themselves general distributions. For a parametric family, such as the Gaussians, \(\mu\) is named by its parameters. For the pictures below, \(\mu\) is a density on the line, stored on a grid. In every case the flow runs on a space of distributions: each point of it is a whole density, the source is a distribution over that space, and the geodesic in the loss is a path of densities.</p> <div class="l-page"> <iframe class="fig fig-setup" src="/2027/assets/html/2027-04-30-from-densities-to-waves/setup.html" frameborder="0" scrolling="no" height="330px" width="100%"></iframe> </div> <div class="caption"> The setting. Left: a space of distributions, here the Gaussians \(\mathcal N(m, s^2)\), drawn as the half-plane of their parameters; each dot is one whole distribution. The flow carries a draw from the source (grey) to a data point (orange) along the geodesic of the chosen metric (solid; here the exact Fisher–Rao geodesic), not along the straight chord of Euclidean flow matching (dashed). The network \(v_\theta\) predicts the velocity at every point of the path. Right: the three marked points, drawn as the densities they are. </div> <p>Existing work fills in the metric \(g\) in two ways. Moving mass gives the Wasserstein geometry, used by Wasserstein Flow Matching<d-cite key="haviv2025wasserstein"></d-cite>. Creating and destroying mass in place gives the geometries of simplex flow matching: the flat geometry of linear mixtures, the usual baseline, and the Fisher–Rao geometry of Fisher Flow Matching<d-cite key="davis2024fisher"></d-cite> and statistical-manifold flow matching<d-cite key="cheng2024statistical"></d-cite>. All of them come from one recipe:</p> <blockquote> <p>Fix a rule for how probability mass may change, and a price for changing it. The metric is the cheapest price of a given change. Flow matching then uses the metric’s geodesics as interpolants and its norm in the loss.</p> </blockquote> <p>The next sections derive each geometry from the recipe on one running example. After that we ask what the recipe gives when it acts on something other than a density.</p> <h2 id="a-running-example">A running example</h2> <p>Take two Gaussian densities of width \(\sigma\) a distance \(d\) apart, \(\mu_0 = \mathcal N(-d/2, \sigma^2)\) and \(\mu_1 = \mathcal N(d/2, \sigma^2)\), with \(d = 5\sigma\). For each geometry we ask what the geodesic from \(\mu_0\) to \(\mu_1\) does and how long it is. Here are the answers for the three density geometries, before any derivation:</p> <div class="l-page"> <iframe class="fig fig-dict3" src="/2027/assets/html/2027-04-30-from-densities-to-waves/dictionary.html?rows=3" frameborder="0" scrolling="no" height="480px" width="100%"></iframe> </div> <div class="caption"> Three geodesics between the same two Gaussians (\(\sigma = 0.7\), \(d = 3.5\)). Press play. The Wasserstein bump slides. The mixture and Fisher–Rao bumps cross-fade without moving, with different timing. Switch "show" to the regression target to see what a flow matching network is trained to output at the current \(t\): the change of density \(\partial_t\mu_t\) produced by \(\dot x_t\). Transport gives a dipole that follows the bump; birth and death give a loss on the left and a gain on the right. Each row is derived in the next three sections. The other endpoint choices reappear with a fourth row later on. </div> <h2 id="transport-gives-wasserstein">Transport gives Wasserstein</h2> <p><strong>Rule.</strong> Mass moves with a velocity field \(v\) and is conserved locally:</p> \[\partial_t \mu + \nabla\cdot(\mu v) = 0 .\] <p>This is the continuity (transport) equation, the same equation that links the probability path \(p_t\) of any flow matching model to its vector field \(u_t\). Here it acts one level up. The density \(\mu\) is a single data point, a function of position \(x\) on the line, and \(v(x)\) says where its mass moves; the equation describes one step along the path between two data points.</p> <p><strong>Cheapest price.</strong> Write \(\delta\mu\) for an infinitesimal change of \(\mu\), a tangent vector. Many fields produce the same \(\delta\mu\): adding any \(w\) with \(\nabla\cdot(\mu w) = 0\), a flow that circulates without piling up mass, changes nothing. Charge kinetic energy, \(\int \lVert v\rVert^2\, d\mu\). A circulating part costs energy and moves nothing, so the cheapest field has none: it is a gradient, \(v = \nabla\xi\). Its price is Otto’s metric<d-cite key="otto2001"></d-cite></p> \[g^{W}_\mu(\delta\mu,\delta\mu) = \int \lVert\nabla\xi\rVert^2\, d\mu,\] \[\delta\mu = -\nabla\cdot(\mu\nabla\xi).\] <p><strong>Geodesics.</strong> The length of the shortest path is the \(W_2\) distance<d-cite key="benamou2000"></d-cite>. Along it every particle moves in a straight line at constant speed (displacement interpolation). This is the interpolant in the loss. It is closed form in one dimension, where it interpolates the quantile functions. Wasserstein Flow Matching uses the closed form between Gaussians and entropic estimates between point clouds<d-cite key="haviv2025wasserstein"></d-cite>.</p> <p><strong>Running example.</strong> The Gaussian slides from \(-d/2\) to \(d/2\) without changing shape, and \(W_2 = d\). The distance grows without bound as the bumps separate.</p> <h2 id="birth-and-death-give-the-mixture">Birth and death give the mixture</h2> <p><strong>Rule.</strong> Mass may not move. It may only appear or disappear in place, at a rate \(r(x)\):</p> \[\partial_t \mu = r\,\mu, \qquad \int r\, d\mu = 0 ,\] <p>where the zero-mean condition keeps the total mass at one. There is nothing to choose: \(r = \delta\mu/\mu\). What is left to decide is the price.</p> <p><strong>Flat price.</strong> Charge the change itself, \(\int (r\mu)^2\,dx\). The metric is</p> \[g^{L^2}_\mu(\delta\mu,\delta\mu) = \int (\delta\mu)^2\, dx ,\] <p>the same at every \(\mu\), so the geometry is flat.</p> <p><strong>Geodesics.</strong> Straight lines, \(\mu_t = (1-t)\,\mu_0 + t\,\mu_1\), the mixture path. A mixture of densities is a density, so the path never leaves the simplex. In the loss, this is Euclidean flow matching on the probability vector: the interpolant is linear, the target is \(\mu_1 - \mu_0\) at every \(t\), and the norm is Euclidean. It is the linear baseline that Dirichlet Flow Matching<d-cite key="stark2024dirichlet"></d-cite> and statistical-manifold flow matching<d-cite key="cheng2024statistical"></d-cite> compare against. Discrete Flow Matching<d-cite key="gat2024discrete"></d-cite> uses paths of the same mixture form one level up, for the distribution over tokens.</p> <p><strong>Running example.</strong> The left bump fades out at a constant rate while the right bump fades in, and \(\lVert\mu_1 - \mu_0\rVert_{L^2} = 0.90\). That number depends on the units of \(x\): stretching \(x\) by a factor \(c\) divides it by \(\sqrt c\). The flat price is not intrinsic to the distributions.</p> <h2 id="fishers-price-gives-fisher-rao">Fisher’s price gives Fisher-Rao</h2> <p><strong>Same rule, other price.</strong> Keep birth and death, and charge the rate instead of the change: the variance of the rate, \(\int r^2\,d\mu\) (its mean is zero). This gives the Fisher–Rao metric<d-cite key="rao1945,amari2016information"></d-cite>,</p> \[g^{FR}_\mu(\delta\mu,\delta\mu) = \int r^2\, d\mu = \int \frac{(\delta\mu)^2}{\mu}\, dx .\] <p>Compared with the flat price, it divides by \(\mu\): changing mass that is nearly zero is expensive. Up to scale, it is the only metric on densities that does not depend on how the underlying space is parameterised<d-cite key="bauer2016uniqueness"></d-cite>, which is exactly what the flat price lacked.</p> <p><strong>The square-root map.</strong> Put \(s = \sqrt{\mu}\). Then \(\delta s = \delta\mu/(2\sqrt{\mu})\), so</p> \[\lVert\delta s\rVert^2_{L^2} = \int \frac{(\delta\mu)^2}{4\mu}\,dx = \tfrac14\, g^{FR}(\delta\mu,\delta\mu).\] <p>This is why Fisher Flow Matching and statistical-manifold flow matching replace \(p\) by \(\sqrt p\) before anything else. In the coordinates \(s = \sqrt\mu\), Fisher–Rao is the round metric of the unit sphere in \(L^2\), up to the factor \(\tfrac14\). Densities are nonnegative, so they fill only the <strong>nonnegative orthant</strong> of that sphere. The mixture is flat in \(\mu\); Fisher–Rao is round in \(\sqrt\mu\).</p> <p><strong>Geodesics.</strong> Great circles on the sphere:</p> \[s_t = \frac{\sin((1-t)\Omega)}{\sin\Omega}\,s_0 + \frac{\sin(t\Omega)}{\sin\Omega}\,s_1,\] \[\cos\Omega = \mathrm{BC} = \int\sqrt{\mu_0\mu_1}\,dx,\] \[d_{FR}(\mu_0,\mu_1) = 2\Omega ,\] <p>where BC is the Bhattacharyya coefficient. In the loss, the interpolant is this spherical interpolation of \(\sqrt\mu\), and the norm is the \(L^2\) norm of \(\delta s\). Compared with the mixture it changes the timing: because small masses are expensive, the path slows down near the edges of the simplex.</p> <div class="l-page"> <iframe class="fig fig-simplex" src="/2027/assets/html/2027-04-30-from-densities-to-waves/simplex.html" frameborder="0" scrolling="no" height="540px" width="100%"></iframe> </div> <div class="caption"> Distributions on three categories. Left: the simplex is a triangle, and the mixture path is a straight line. Right: the square-root map sends the triangle onto an eighth of the unit sphere, seen here from the direction \((1,1,1)\), and the Fisher–Rao path is a great circle. Each path is straight in its own coordinates and curved in the other's. Drag the endpoints. The unit balls show the price of a step. Under the flat price they are equal circles in \(\mu\). Under Fisher–Rao they shrink and flatten towards the edges, where changing a small mass is expensive, and on the sphere they become equal round discs, foreshortened near the rim by the viewing angle. Each edge of the triangle is the two-category simplex, which reappears as the Bloch sphere below. </div> <p><strong>Running example.</strong> \(\mathrm{BC} = e^{-d^2/8\sigma^2}\), which is \(0.04\) at \(d = 5\sigma\). As with the mixture, mass does not slide: the left bump fades out while the right fades in. The distance is \(d_{FR} = 3.05\), close to its maximum of \(\pi\), which every pair of non-overlapping densities reaches. Fisher–Rao barely distinguishes bumps \(5\sigma\) apart from bumps \(50\sigma\) apart. The mixture and Fisher–Rao rows of the opening widget look alike; the difference is in the timing. Here \(\Omega \approx \pi/2\), so the left bump keeps mass about \(\cos^2(\pi t/2)\) rather than \(1-t\). In the regression-target view, the change of density in the Fisher–Rao target shrinks to zero at both ends of the path, while the mixture’s stays the same at every \(t\). The Fisher–Rao path still moves at constant Fisher–Rao speed there; small changes of small masses are what it charges most for.</p> <p><strong>Same reach, different price.</strong> None of these rules restricts where a positive density can go. Birth and death produce any change of total mass zero (\(r = \delta\mu/\mu\)), and so does transport (solve \(\delta\mu = -\nabla\cdot(\mu\nabla\xi)\) for \(\xi\)). The rules and prices differ only in how a change is paid for, and therefore in which path is cheapest. The mixture and Fisher–Rao make the point most sharply: one rule, two prices, two geometries.</p> <h2 id="an-amplitude-gives-fubini-study">An amplitude gives Fubini-Study</h2> <p>So far the recipe has reproduced the geometries that existing flow matching methods use. What if it acts on something other than a density? Every rule so far moves a density, and a density is nonnegative, so all three geometries live in the nonnegative orthant of the square-root sphere. Some data do not. A short-time Fourier transform frame, an MRI measurement or an eigenfunction that changes sign is a signed or complex amplitude, and its sign or phase carries information. To model such data, change the state.</p> <details> <summary><b>Five quantum words, for ML readers</b></summary> <ul> <li> <b>Amplitude</b> ψ: a complex function with ∫|ψ|² = 1. Its density is μ = |ψ|².</li> <li> <b>Global phase</b>: multiplying ψ by a constant e<sup>iα</sup>. It changes nothing observable.</li> <li> <b>Ray</b>: an amplitude up to its global phase, that is, the set of all e<sup>iα</sup>ψ. Quotienting by this circle of phases is "modulo U(1)".</li> <li> <b>Hamiltonian</b> H: a self-adjoint operator that generates the motion, ∂<sub>t</sub>ψ = −iHψ. Here it is only a control, like v and r above; no physics is assumed.</li> <li> <b>Fidelity</b> F = |⟨ψ₀, ψ₁⟩|: the overlap of two rays, the analogue of BC.</li> </ul> </details> <p><strong>State.</strong> A complex amplitude \(\psi\) with density \(\mu = \lvert\psi\rvert^2\). Every density is reached (take \(\psi = \sqrt{\mu}\)), but many amplitudes give the same density: \(e^{i\chi(x)}\psi\) does, for any real function \(\chi\).</p> <p><strong>Rule.</strong> Conservation of mass becomes conservation of the norm, \(\int\lvert\psi\rvert^2 = 1\). A linear evolution \(\partial_t\psi = A\psi\) changes the norm at the rate \(2\,\mathrm{Re}\,\langle\psi, A\psi\rangle\), which is zero for every \(\psi\) exactly when \(A\) is skew-adjoint. Writing \(A = -iH\) with \(H\) self-adjoint gives</p> \[\partial_t\psi = -iH\psi, \qquad H^* = H ,\] <p>the Schrödinger equation, here obtained as the general norm-preserving linear rule. As with transport, no particular \(H\) is chosen, and every motion along the sphere is reachable.</p> <p><strong>Cheapest price.</strong> Charge the control, as for Fisher–Rao: Fisher–Rao charges the variance of the rate \(r\), and here we charge the variance of \(H\) in the state \(\psi\), the energy variance</p> \[\mathrm{Var}_\psi(H) = \langle H\psi, H\psi\rangle - \langle\psi, H\psi\rangle^2 .\] <p>It depends on \(H\) only through \(H\psi\), so every \(H\) producing the same motion has the same price, and there is nothing left to minimise. It is also unchanged by \(H \to H + c\) for a constant \(c\), which adds only a global phase. In terms of the motion \(\delta\psi = -iH\psi\), this price is</p> \[\begin{aligned} g^{FS}_\psi(\delta\psi,\delta\psi) &amp;= \lVert\delta\psi\rVert^2 - \lvert\langle\psi,\delta\psi\rangle\rvert^2 \\ &amp;= \min_{\beta\in\mathbb{R}} \lVert\delta\psi + i\beta\psi\rVert^2 , \end{aligned}\] <p>the <strong>Fubini–Study metric</strong><d-cite key="provost1980riemannian,bengtsson2017geometry"></d-cite>. The second form says what it measures. The direction \(i\beta\psi\) only rotates the global phase, so it changes the amplitude but not the ray, and the metric charges a motion only for its component that moves the ray. Wasserstein likewise charges a field only for the part that moves the density. Fisher–Rao charges the variance of the growth rate; Fubini–Study charges the variance of the energy.</p> <p><strong>Geodesics.</strong> Rotate the global phase of \(\psi_1\) so that \(\langle\psi_0,\psi_1\rangle\) is real and nonnegative, and call its value \(F\), the fidelity. The geodesics are great circles, the Fisher–Rao formula applied to amplitudes:</p> \[\psi_t = \frac{\sin((1-t)\Omega)}{\sin\Omega}\,\psi_0 + \frac{\sin(t\Omega)}{\sin\Omega}\,\psi_1,\] \[\cos\Omega = F = \lvert\langle\psi_0,\psi_1\rangle\rvert, \qquad d_{FS}(\psi_0,\psi_1) = \Omega .\] <p>The distance is \(\Omega\), not \(2\Omega\) as for Fisher–Rao. That is the factor \(\tfrac14\) in the square-root map: the standard Fisher–Rao distance is arc length on a sphere of radius two, while Fubini–Study uses the unit sphere, on which orthogonal states are \(\pi/2\) apart. To compare the two, halve \(d_{FR}\).</p> <p>In the loss, the interpolant is this spherical interpolation after the phase alignment, and the norm is the \(L^2\) norm with the \(i\psi\) component removed.</p> <p><strong>Running example.</strong> Give the target a phase, \(\psi_0 = \sqrt{\mu_0}\) and \(\psi_1 = \sqrt{\mu_1}\,e^{ikx}\). The densities are unchanged. The product \(\sqrt{\mu_0\mu_1}\) is \(\mathrm{BC}\) times the \(\mathcal N(0,\sigma^2)\) density, whose Fourier transform at \(k\) is \(e^{-k^2\sigma^2/2}\), so</p> \[F = \mathrm{BC}\; e^{-k^2\sigma^2/2} .\] <p>At \(k = 0\) the geodesic is the Fisher–Rao cross-fade, at distance \(\tfrac12 d_{FR}\). A phase only moves the states apart. At \(d = 5\sigma\) the effect is small, because the bumps barely overlap and are nearly orthogonal already. Move them closer, to \(d = 2\sigma\): then \(\mathrm{BC} = 0.61\) and \(\tfrac12 d_{FR} = 0.92\), and the phase raises \(d_{FS}\) to \(1.34\) at \(k = 2\) and to \(\pi/2\), orthogonal, at \(k = 6\). The densities have not changed.</p> <h2 id="fisher-rao-is-the-part-the-density-sees">Fisher-Rao is the part the density sees</h2> <p>The running example suggests that Fubini–Study is Fisher–Rao plus a phase. Write the amplitude in polar form at each point, \(\psi = \sqrt\mu\, e^{i\varphi}\) (Madelung’s coordinates<d-cite key="madelung1927"></d-cite>). Then \(\delta\psi = (\delta\sqrt\mu + i\sqrt\mu\,\delta\varphi)\,e^{i\varphi}\), and the two terms are orthogonal at every point:</p> \[\lVert\delta\psi\rVert^2 = \underbrace{\int (\delta\sqrt\mu)^2\,dx}_{\tfrac14\, g^{FR}(\delta\mu,\delta\mu)} \;+\; \underbrace{\int (\delta\varphi)^2\, d\mu}_{\text{phase}} .\] <p>Removing the global phase replaces \(\delta\varphi\) by its deviation from its \(\mu\)-weighted mean, so the Fubini–Study metric splits into two orthogonal parts:</p> \[g^{FS} = \tfrac14\, g^{FR} \;\oplus\; \mathrm{Var}_\mu(\delta\varphi) .\] <p>A change of modulus costs its Fisher–Rao length; a change of phase costs the variance of the phase change under \(\mu\). This is the infinitesimal form of the result that the Madelung transform is an isometry<d-cite key="khesin2019madelung"></d-cite>. Two consequences follow.</p> <ul> <li> <strong>On nonnegative endpoints the two flows coincide.</strong> For \(\psi_0 = \sqrt{\mu_0}\) and \(\psi_1 = \sqrt{\mu_1}\) the inner product is already \(\mathrm{BC} \ge 0\), and the great circle between them has nonnegative coefficients for all \(t\in[0,1]\), so it stays in the orthant. The Fubini–Study geodesic is the Fisher–Rao geodesic, and the sphere used by Fisher Flow is the nonnegative part of this one.</li> <li> <strong>A phase mismatch only adds distance.</strong> \(F = \lvert\int \overline{\psi_0}\psi_1\rvert \le \int \lvert\psi_0\rvert\lvert\psi_1\rvert = \mathrm{BC}\), with equality exactly when the relative phase is constant where both amplitudes are nonzero. So \(d_{FS} \ge \tfrac12 d_{FR}\). The factor \(e^{-k^2\sigma^2/2}\) in the running example is one instance.</li> </ul> <h3 id="two-points-the-bloch-sphere">Two points, the Bloch sphere</h3> <p>With two points everything can be drawn. Fix the global phase so that \(\psi = (\cos\tfrac\vartheta2,\ e^{i\varphi}\sin\tfrac\vartheta2)\). The density is \(\mu = (\cos^2\tfrac\vartheta2, \sin^2\tfrac\vartheta2)\). The modulus part of the metric is \(\tfrac14\delta\vartheta^2\), and the phase part is \(\mu_1\mu_2\,\delta\varphi^2 = \tfrac14\sin^2\vartheta\,\delta\varphi^2\), so</p> \[g^{FS} = \tfrac14\left(\delta\vartheta^2 + \sin^2\vartheta\,\delta\varphi^2\right),\] <p>the round sphere of radius \(\tfrac12\), known as the Bloch sphere. Height on the sphere is the density (\(\cos\vartheta = \mu_1 - \mu_2\)), and longitude is the relative phase. Nonnegative amplitudes (\(\varphi = 0\)) form a half-meridian from pole to pole: this arc is Fisher–Rao, an edge of the eighth-sphere in the earlier figure. Signed real amplitudes (\(\varphi \in \{0, \pi\}\)) form the full meridian, and complex amplitudes fill the sphere.</p> <div class="l-page"> <iframe class="fig fig-bloch" src="/2027/assets/html/2027-04-30-from-densities-to-waves/bloch.html" frameborder="0" scrolling="no" height="820px" width="100%"></iframe> </div> <div class="caption"> Drag to rotate; the sliders θ and φ are the polar angle and the relative phase of each state. "Two nonnegative states" (the default): the geodesic stays on the orange arc, and its length equals half the Fisher–Rao distance. "Same density, other phase": both states sit at the same height, so their densities are equal and the Fisher–Rao distance is zero, while the Fubini–Study distance is not. "Two complex states" is the general case. The pink curve is the path under a constant Hamiltonian whose axis is tilted away from the geodesic's: it also preserves the norm and connects the two states, but it is a small circle and longer. At zero tilt it is the geodesic. </div> <p>The picture also shows what happens at a density’s boundary. A distribution with all its mass on one point is a corner of the simplex, but on the Bloch sphere it is a pole, an ordinary point. A nonnegative path must end there; a complex path can pass through.</p> <h2 id="geodesics-side-by-side">Geodesics, side by side</h2> <p>Squaring the Fubini–Study geodesic gives its density:</p> \[\mu_t = a_t^2\,\mu_0 + b_t^2\,\mu_1 + 2a_t b_t\,\mathrm{Re}\big(\overline{\psi_0}\,\psi_1\big),\] <p>where \(a_t, b_t\) are the two sine coefficients. The first two terms are the Fisher–Rao cross-fade. The third is an interference term, which can be negative: where it cancels the other two, the density vanishes. In the running example it is \(2a_tb_t\sqrt{\mu_0\mu_1}\cos(kx)\), a fringe pattern of wavenumber \(k\) where the two bumps overlap. A nonnegative geometry cannot produce it, because positive combinations of nonnegative amplitudes are nonnegative.</p> <div class="l-page"> <iframe class="fig fig-dict4" src="/2027/assets/html/2027-04-30-from-densities-to-waves/dictionary.html?d=1.4&amp;k=6" frameborder="0" scrolling="no" height="600px" width="100%"></iframe> </div> <div class="caption"> The opening figure with its fourth row, here at \(d = 2\sigma = 1.4\) and \(k = 6\) so that the bumps overlap. Set \(k = 0\): the Fisher–Rao and Fubini–Study rows become identical. Raise \(k\): the target density does not change, but fringes appear. In the regression-target view the thin lines are the amplitude velocity \(\dot\psi_t\), the quantity the Fubini–Study loss actually regresses on; it oscillates even where \(\partial_t\mu_t\) is small. The other endpoints: an "oscillator state" is a Gaussian times a cubic polynomial, a real amplitude with three sign changes. The Wasserstein path must open its three zeros by moving mass aside, while the Fubini–Study path makes them by cancellation. The wave packets cos 3x → cos 6x show the same between two signed waves. </div> <p>The fringes are not mass moving anywhere. A pure phase change moves no density at all, so it costs nothing under Wasserstein or Fisher–Rao, while Fubini–Study charges it.</p> <h2 id="the-phase-is-invisible-to-samples">The phase is invisible to samples</h2> <p>Suppose the data are samples from \(\mu = \lvert\psi\rvert^2\). Their distribution depends on \(\mu\) alone, so <strong>every statistic computed from them is unchanged by any phase</strong> \(e^{i\chi(x)}\). This covers likelihoods, MMD, sliced Wasserstein distances and classifier-based scores. At its best, a flow that also carries a phase fits such data exactly as well as a flow on \(\mu\), and no better. On nonnegative data the two are the same flow.</p> <p>The phase becomes measurable as soon as the data include a second basis. In the running example, \(e^{ikx}\) leaves the position density alone but shifts the Fourier transform by \(k\). Physicists call the Fourier variable momentum. In general the Fourier density \(\lvert\hat\psi(p)\rvert^2\) changes with \(\chi\). This is how quantum state tomography recovers a state from measurements in several bases. It is also why recovering a signal from the magnitude of a single Fourier transform is ill-posed, while overlapping short-time transforms usually pin it down.</p> <div class="l-page"> <iframe class="fig fig-samples" src="/2027/assets/html/2027-04-30-from-densities-to-waves/samples.html" frameborder="0" scrolling="no" height="740px" width="100%"></iframe> </div> <div class="caption"> Samples from a Gaussian amplitude with a phase χ, against samples from the same Gaussian with no phase. The option χ = kx is the running example's phase. In position, the two-sample test separates them only at its false-positive rate, whatever the phase. In momentum (the Fourier variable) it separates them once the phase is strong enough: kx shifts the momentum distribution, and a chirp widens it. </div> <h2 id="geometry-and-representation">Geometry and representation</h2> <p>So far the fourth column has been a geometry: a metric, and the geodesics it puts in the loss. It also changes a second thing, the <strong>representation</strong>, meaning the function that the network outputs and the flow carries. The two are separate choices. Fisher Flow Matching already makes one of them. Fisher–Rao in \(p\) and Fisher–Rao in \(\sqrt p\) are the same geometry in different coordinates, and the square root is chosen because the geodesics, and the outputs, are simpler there.</p> <p>The representation matters most at a <strong>node</strong>, a point where the density vanishes. Take \(\mu(x) \propto x^2 e^{-x^2}\). The density is smooth and touches zero at the origin. Its nonnegative root \(\sqrt\mu \propto \lvert x\rvert\, e^{-x^2/2}\) has a kink there, while the signed root \(\psi \propto x\, e^{-x^2/2}\) is smooth and has the same density.</p> <p>A smooth approximator fits the signed root far more easily: with one zero, eight Fourier modes fit \(\psi\) to within 1%, while \(\sqrt\mu\) is still above 1% at forty, because a kink makes the error of a smooth fit fall only like a power of the number of modes. The other common outputs do no better at a node: \(\mu\) itself must stay nonnegative and touch its bound there, and \(\log\mu\), the natural output of a softmax, goes to minus infinity.</p> <p>Zeros also separate the geometries along a path. Take a source with no zeros and a target with some, follow the geodesic between them, and ask what changes when a network, which outputs smooth functions, has to produce it.</p> <div class="l-page"> <iframe class="fig fig-zeros" src="/2027/assets/html/2027-04-30-from-densities-to-waves/zeros.html" frameborder="0" scrolling="no" height="520px" width="100%"></iframe> </div> <div class="caption"> Geodesics from a Gaussian with no zeros to a target with one, two or three; red marks are zeros of \(\mu_t\). Press play. The slider \(\varepsilon\) blurs each geometry's output at scale \(\varepsilon\), a simple stand-in for a network's limited resolution: the transport map for Wasserstein, \(\sqrt\mu\) for Fisher–Rao and \(\psi\) for Fubini–Study. At the default \(\varepsilon = 0.05\), Wasserstein and Fisher–Rao produce dips but no zeros, even at \(t = 1\), while Fubini–Study keeps every zero, made by cancellation: for an odd target one node arrives from far away, and the others form in pairs partway along. Set \(\varepsilon = 0\) for the exact geodesics. Fisher–Rao then reaches its zeros only at \(t = 1\), and Wasserstein has them from the first instant, for the reason given below. The same \(\varepsilon\) is harsher on the map than on the roots, because each bump of the target comes from a narrow range of source points. </div> <p>The three behaviours follow from the formulas. Along a Fisher–Rao geodesic, \(\sqrt{\mu_t} = a_t\sqrt{\mu_0} + b_t\sqrt{\mu_1}\) with \(a_t, b_t \ge 0\), so the density vanishes only where both endpoints vanish, which a source with no zeros never does. The mixture behaves the same way. Along a Fubini–Study geodesic, \(\psi_t = a_t\psi_0 + b_t\psi_1\) vanishes wherever the two terms cancel. Wasserstein moves mass, and a flow that moves samples acts as a map \(T\). In one dimension the density it produces is</p> \[\mu\big(T(z)\big) = \frac{\mu_0(z)}{T'(z)} ,\] <p>so from a source with no zeros the target can vanish only where \(T'(z) = \infty\). The optimal map has exactly that, a vertical tangent at each zero of the target, and the maps \((1-t)\,z + t\,T(z)\) along the geodesic inherit it for every \(t &gt; 0\). So the exact geodesic has each zero from the first instant, as a single point at the centre of a notch. It can do this only because its velocity field is not smooth: the field inherits the infinite slope too. That is a property of the geometry, not of anything a network would output. A flow with a smooth velocity field, which is what flow matching learns, is a diffeomorphism at every time, so from a source with no zeros it never produces one, even at \(t = 1\). It can only approach the target, with dips that deepen as the network sharpens. A smooth \(\sqrt\mu\) meets a milder version of the same limit. It cannot cross zero, only touch it, and a touching root makes \(\mu\) vanish like \(x^4\) instead of the target’s \(x^2\); a blurred root does not reach zero at all. A smooth \(\psi\) has no such limit, because it passes through zero by changing sign. That zero also survives small errors: a small error in \(\psi\) moves it but cannot remove it, whereas a zero made by touching, in \(\mu\) or \(\sqrt\mu\), disappears under the smallest upward error and turns negative under the smallest downward one. A network never outputs anything exactly, so only a sign change gives it zeros it can rely on. In the same way, a continuous change of coordinates cannot change the number of sign changes of the function it transports, the topological mismatch that Waveflow<d-cite key="thiede2024waveflow"></d-cite> handles with spline priors for fermionic wave functions. Neural networks in physics have represented the signed or complex amplitude directly since Carleo and Troyer<d-cite key="carleo2017solving"></d-cite>.</p> <p>None of this contradicts the previous section. Samples cannot tell \(\psi\) from \(\lvert\psi\rvert\), so choosing a signed root changes nothing the data can check. It changes what the network has to output. The fourth column therefore offers two things, which are worth keeping apart. Its geometry, the phase direction and the interference term, helps only when the data carry a sign or a phase. Its representation, an amplitude allowed to change sign, can help whenever the densities have zeros. Whether an easier function to output also makes the flow easier to train is an empirical question, and the recipe does not answer it.</p> <h2 id="the-dictionary">The dictionary</h2> <div class="table-scroll"> <table> <thead> <tr> <th> </th> <th><strong>Wasserstein</strong></th> <th><strong>Mixture</strong></th> <th><strong>Fisher–Rao</strong></th> <th><strong>Fubini–Study</strong></th> </tr> </thead> <tbody> <tr> <td>state</td> <td>density \(\mu\)</td> <td>density \(\mu\)</td> <td>density \(\mu\)</td> <td>ray \([\psi]\), \(\mu = \lvert\psi\rvert^2\)</td> </tr> <tr> <td>rule</td> <td>\(\partial_t\mu + \nabla\cdot(\mu v) = 0\)</td> <td>\(\partial_t\mu = r\mu\)</td> <td>\(\partial_t\mu = r\mu\)</td> <td>\(\partial_t\psi = -iH\psi\)</td> </tr> <tr> <td>price of the control</td> <td>\(\int \lVert v\rVert^2 d\mu\), minimised</td> <td>\(\int (r\mu)^2 dx\)</td> <td>\(\mathrm{Var}_\mu(r)\)</td> <td>\(\mathrm{Var}_\psi(H)\)</td> </tr> <tr> <td>metric (the norm in the loss)</td> <td>\(\int \lVert\nabla\xi\rVert^2 d\mu\)</td> <td>\(\int (\delta\mu)^2 dx\)</td> <td>\(\int (\delta\mu)^2/\mu\, dx\)</td> <td>\(\tfrac14 g^{FR} \oplus \mathrm{Var}_\mu(\delta\varphi)\)</td> </tr> <tr> <td>interpolant in the loss</td> <td>displacement interpolation</td> <td>\((1-t)\mu_0 + t\mu_1\)</td> <td>slerp of \(\sqrt\mu\)</td> <td>slerp of phase-aligned \(\psi\)</td> </tr> <tr> <td>distance</td> <td>\(W_2\)</td> <td>\(\lVert\mu_1-\mu_0\rVert_{L^2}\)</td> <td>\(2\arccos \mathrm{BC}\)</td> <td>\(\arccos F\)</td> </tr> <tr> <td>running example</td> <td>\(d\); slides</td> <td>\(0.90\) (depends on units); cross-fades</td> <td>\(3.05\ (\approx\pi)\); cross-fades, slow at the ends</td> <td>\(\arccos(\mathrm{BC}\,e^{-k^2\sigma^2/2})\); fringes</td> </tr> <tr> <td>sign of amplitude</td> <td>—</td> <td>\(\ge 0\)</td> <td>\(\ge 0\)</td> <td>any complex phase</td> </tr> <tr> <td>at a zero of \(\mu\)</td> <td>the map \(T\) has a vertical tangent</td> <td>\(\mu\) touches \(0\)</td> <td>\(\sqrt\mu\) has a kink</td> <td>\(\psi\) changes sign smoothly</td> </tr> <tr> <td>new zeros along the exact geodesic</td> <td>all at once, from a singular map</td> <td>none before \(t = 1\)</td> <td>none before \(t = 1\)</td> <td>by cancellation</td> </tr> <tr> <td>zeros from a smooth network output</td> <td>none: a smooth map has finite slope</td> <td>only by touching \(0\); lost under small errors</td> <td>only touching, of the wrong order</td> <td>yes: a sign change survives small errors</td> </tr> </tbody> </table> </div> <h2 id="other-rules-and-prices">Other rules and prices</h2> <p>The recipe has three slots, the state, the rule and the price, and each can be filled in other ways. None of the following is needed for the rest of the post.</p> <ul> <li> <strong>Both rules at once.</strong> Allow transport and birth and death together, and add their prices. The result is the Wasserstein–Fisher–Rao, or Hellinger–Kantorovich, geometry of unbalanced optimal transport<d-cite key="chizat2018interpolating,liero2018optimal,kondratyev2016new"></d-cite>. A length scale set by the relative price decides when moving mass is cheaper than destroying and recreating it. Its geodesics between general densities have no closed form.</li> <li> <strong>Other prices for transport.</strong> Weighting the kinetic energy by a nonlinear function of \(\mu\) gives the transport distances of Dolbeault, Nazaret and Savaré<d-cite key="dolbeault2009new"></d-cite>. Measuring the velocity field in a reproducing-kernel Hilbert space gives the Stein geometry, under which Stein variational gradient descent is a gradient flow<d-cite key="duncan2023geometry"></d-cite>.</li> <li> <strong>Jumps on a graph.</strong> If the categories have structure (ordinal labels, neighbouring tokens), let mass hop between neighbouring categories along the edges of a graph. Pricing the hops like kinetic energy gives Maas’s discrete Wasserstein distance<d-cite key="maas2011gradient"></d-cite>. Here nearby categories are close, unlike under Fisher–Rao. The rule is a continuous-time Markov chain, the kind of process that discrete flow matching<d-cite key="gat2024discrete"></d-cite> samples, though there its state is a token rather than a distribution.</li> <li> <strong>Transport with noise.</strong> Add diffusion to the transport rule and keep the kinetic price, and the cheapest path is the Schrödinger bridge of entropic optimal transport<d-cite key="leonard2014survey"></d-cite>. It is a regularised geodesic rather than a metric one.</li> <li> <strong>Matrices instead of amplitudes.</strong> Fubini–Study quotients an amplitude by one global phase. Quotienting a matrix of amplitudes by a unitary matrix gives the Bures metric on mixed quantum states<d-cite key="bengtsson2017geometry"></d-cite>. On Gaussian covariances this is the Bures–Wasserstein distance, which is \(W_2\) between centred Gaussians<d-cite key="bhatia2019bures"></d-cite>, so the fourth column meets the first.</li> <li> <strong>The geometric mixture.</strong> Information geometry pairs the mixture path, straight in \(\mu\), with the exponential path, straight in \(\log\mu\): \(\mu_t \propto \mu_0^{1-t}\mu_1^{t}\)<d-cite key="amari2016information"></d-cite>. The second comes from an affine connection, not from a price, so it sits outside the recipe.</li> </ul> <h2 id="which-geometry-for-which-data">Which geometry for which data</h2> <p>The running example already sorts the four.</p> <ul> <li> <strong>Wasserstein</strong>, when distances in the underlying space should matter. Bumps far apart are far apart, and the interpolant moves mass rather than teleporting it. Point clouds and spatial densities are examples.</li> <li> <strong>Mixture</strong>, as the baseline. It is the simplest and is exact on the simplex, but its price ignores how much mass is already present, and its distance depends on the units of \(x\). Dirichlet Flow Matching reports that linear flow matching on the simplex behaves pathologically and was built to avoid it<d-cite key="stark2024dirichlet"></d-cite>, and statistical-manifold flow matching benchmarks against it<d-cite key="cheng2024statistical"></d-cite>.</li> <li> <strong>Fisher–Rao</strong>, when the categories are exchangeable. Its distance ignores where mass sits, does not depend on units, and saturates at \(\pi\) once the supports separate. Categorical data are the natural case.</li> <li> <strong>Fubini–Study</strong>, when the sign or phase is part of the object: quantum states measured in several bases, STFT frames, MRI \(k\)-space, eigenfunctions that change sign. On samples of a density its geometry adds nothing, since no statistic of the samples sees the phase and on nonnegative data it is Fisher–Rao. Its representation is a separate matter: when the densities have zeros, a signed amplitude is the smoother function to output.</li> </ul> <p>The mixture, Fisher–Rao and Fubini–Study geometries have closed-form geodesics, exponential and logarithm maps, and Wasserstein does in one dimension and between Gaussians, so in these cases the Riemannian objective applies as it stands. The recipe identifies the space the data live in. It does not say which path through that space is easiest for a network to learn, which remains an empirical question for each kind of data.</p> </d-article> <d-appendix> <d-footnote-list></d-footnote-list> <d-citation-list></d-citation-list> </d-appendix> <d-bibliography src="/2027/assets/bibliography/2027-04-30-from-densities-to-waves.bib"></d-bibliography> <d-article> <h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2> <p class="mb-2">Here are some more articles you might like to read next:</p> <ul class="list-disc pl-7 my-3 space-y-2 marker:text-[var(--global-theme-color)]"> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/when-b-is-correct/">When B Is Correct</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/what-did-the-alignment-learn/">Wrong Clips, Right Categories: What Cross-Modal Alignment Actually Learns</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/two-fragments-or-silence/">Two Fragments, or Silence</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/toward-observability-in-physical-ai/">Toward Observability in Physical AI: Offline Diagnostics for Imitation-Learning Policies in Robotics</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/sac-massive-sim/">Getting SAC to Work on a Massively Parallel Simulator: An RL Journey With Off-Policy Algorithms</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/remembering-everything/">Why LLMs Can’t Let Go</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/polyglot-dgm/">What Are We Actually Evolving? Four Flaws in Darwin Gödel Machine’s Polyglot Environment</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/mirror-test/">Does a Verlet-Like Orbit Transformer Respect the Mirror?</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/megakernel-reuse-streaming-tts/">One Kernel, Two Transformers - What a Text-LLM Megakernel Teaches Us About Streaming TTS</a> </li> <li class="leading-relaxed"> <a class="underline decoration-1 hover:text-[var(--global-hover-color)]" href="/2027/blog/halpern-npe/">Halpern Iteration Accelerates Solving High-Order Monotone Variational Inequalities</a> </li> </ul> <br> <br> </d-article> </div> <footer class="sticky-bottom mt-5" role="contentinfo"> <div class="container"> © Copyright 2026 ICLR Blog. Powered by <a href="https://jekyllrb.com/" target="_blank" rel="external nofollow noopener">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio" rel="external nofollow noopener" target="_blank">al-folio</a> theme. Hosted by <a href="https://pages.github.com/" target="_blank" rel="external nofollow noopener">GitHub Pages</a>. Photos from <a href="https://unsplash.com" target="_blank" rel="external nofollow noopener">Unsplash</a>. </div> </footer> <script>
+  window.alFolio = {
+    compatBootstrap: false
+  };
+</script> <script src="/2027/assets/js/nav-toggle.js?v=141bd79a73ebc0f0b6ea58e440ae79fc"></script> <script src="/2027/assets/js/distillpub/overrides.js"></script> <script defer type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script> <script src="/2027/assets/al_math/js/mathjax-setup.js"></script> <script src="/2027/assets/js/tooltips-setup.js?v=fe487e99db6c43751e6e7bdb2d6a0611"></script> <script src="/2027/assets/js/no_defer.js?v=53b1b1a645525975c963ce8bf8bfefcf"></script> <script defer src="/2027/assets/js/common.js?v=87baac90f765f2f3362dcf6aaf312a8a"></script> <script defer src="/2027/assets/js/copy_code.js?v=c8a01c11a92744d44b093fc3bda915df" type="text/javascript"></script> <script defer src="/2027/assets/js/jupyter_new_tab.js?v=896d254890d9b47f0281f63bfccf0dee"></script> <script defer src="https://cdn.jsdelivr.net/npm/medium-zoom@1.1.0/dist/medium-zoom.min.js" integrity="sha256-ZgMyDAIYDYGxbcpJcfUnYwNevG/xi9OHKaR/8GK+jWc=" crossorigin="anonymous"></script> <script defer src="/2027/assets/al_img_tools/js/zoom.js"></script> <script defer src="/2027/assets/js/progress-bar.js?v=499464c5c63ced6cf7ad62509f1e2610" type="text/javascript"></script> <script src="https://cdn.jsdelivr.net/npm/vanilla-back-to-top@7.2.1/dist/vanilla-back-to-top.min.js" integrity="sha256-uMJJ3EoTyfRBoTbR+lrfu1uRQ87RZG8AR3cVNuQVeFg=" crossorigin="anonymous"></script> <script>
+    addBackToTop();
+  </script> <script type="module" src="/2027/assets/al_search/js/search/ninja-keys.min.js"></script> <ninja-keys hidebreadcrumbs noautoloadmdicons placeholder="Type to start searching"></ninja-keys> <script src="/2027/assets/al_search/js/search-setup.js"></script> <script>
+// get the ninja-keys element
+const ninja = document.querySelector('ninja-keys');
+
+// add the home and posts menu items
+ninja.data = [{
+    id: "nav-home",
+    title: "home",
+    section: "Navigation",
+    handler: () => {
+      window.location.href = "/2027/";
+    },
+  },{id: "nav-about",
+          title: "about",
+          description: "",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/2027/about/";
+          },
+        },{id: "nav-call-for-blogposts",
+          title: "call for blogposts",
+          description: "",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/2027/call/";
+          },
+        },{id: "nav-submitting",
+          title: "submitting",
+          description: "",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/2027/submitting/";
+          },
+        },{id: "nav-reviewing",
+          title: "reviewing",
+          description: "",
+          section: "Navigation",
+          handler: () => {
+            window.location.href = "/2027/reviewing/";
+          },
+        },{id: "dropdown-lt-strong-gt-2027-lt-strong-gt",
+              title: "<strong>2027</strong>",
+              description: "",
+              section: "Dropdown",
+              handler: () => {
+                window.location.href = "https://iclr-blogposts.github.io/2027/";
+              },
+            },{id: "dropdown-2026",
+              title: "2026",
+              description: "",
+              section: "Dropdown",
+              handler: () => {
+                window.location.href = "https://iclr-blogposts.github.io/2026/";
+              },
+            },{id: "dropdown-2025",
+              title: "2025",
+              description: "",
+              section: "Dropdown",
+              handler: () => {
+                window.location.href = "https://iclr-blogposts.github.io/2025/";
+              },
+            },{id: "dropdown-2024",
+              title: "2024",
+              description: "",
+              section: "Dropdown",
+              handler: () => {
+                window.location.href = "https://iclr-blogposts.github.io/2024/";
+              },
+            },{id: "dropdown-2023",
+              title: "2023",
+              description: "",
+              section: "Dropdown",
+              handler: () => {
+                window.location.href = "https://iclr-blogposts.github.io/2023/";
+              },
+            },{id: "dropdown-2022",
+              title: "2022",
+              description: "",
+              section: "Dropdown",
+              handler: () => {
+                window.location.href = "https://iclr-blog-track.github.io/home/";
+              },
+            },{id: "post-when-b-is-correct",
+        
+          title: "When B Is Correct",
+        
+        description: "On 72 multiple-choice questions, simply reversing the order of two answer lines changed whether activation steering helped either of two small language models. With the correct letters held fixed and 144 responses per layout, steering gave Qwen 11 more correct answers when A appeared first and 19 fewer when B appeared first. SmolLM2 showed the same reversal, yet all 16 of its changed answers went to the first printed line, compared with 13 of 34 for Qwen.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/when-b-is-correct/";
+          
+        },
+      },{id: "post-wrong-clips-right-categories-what-cross-modal-alignment-actually-learns",
+        
+          title: "Wrong Clips, Right Categories: What Cross-Modal Alignment Actually Learns",
+        
+        description: "Rotating audio and video embeddings into alignment boosts cross-modal event recognition from 36.7% to 90.5%. Yet shuffling almost every audio-video pair within its category gives nearly the same score (90.1%), while holding out categories breaks transfer completely.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/what-did-the-alignment-learn/";
+          
+        },
+      },{id: "post-two-fragments-or-silence",
+        
+          title: "Two Fragments, or Silence",
+        
+        description: "A personal agent that already holds memories a person chose to share should default to silence. The only other action returns two original fragments and one gap or causal constraint already written in those texts. Semantic nearness is not a trigger, a feeling of insight is not evidence, and whether an interruption is worth making is left open.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/two-fragments-or-silence/";
+          
+        },
+      },{id: "post-toward-observability-in-physical-ai-offline-diagnostics-for-imitation-learning-policies-in-robotics",
+        
+          title: "Toward Observability in Physical AI: Offline Diagnostics for Imitation-Learning Policies in Robotics",
+        
+        description: "When an imitation-learning policy fails on a robot, the failure looks the same whatever its cause. We turn the terms of the objective behind the Action Chunking Transformer into ten metrics that are computed from recorded demonstrations and saved policies, without a robot, each with a reference value and a place in a fixed order of checks. On two datasets from a low-cost arm they expose a policy that had been trained for 2 steps instead of 20,000, policies that take 98 to 100% of their output from the cameras and almost none from the joint readings, and a measure of the demonstrations alone that anticipates the error after training.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/toward-observability-in-physical-ai/";
+          
+        },
+      },{id: "post-getting-sac-to-work-on-a-massively-parallel-simulator-an-rl-journey-with-off-policy-algorithms",
+        
+          title: "Getting SAC to Work on a Massively Parallel Simulator: An RL Journey With...",
+        
+        description: "This post details how to get the Soft Actor-Critic (SAC) and other off-policy reinforcement learning algorithms to work on massively parallel simulators (e.g., Isaac Sim with thousands of robots simulated in parallel) for locomotion tasks. In addition to tuning SAC for speed, the post also explores why SAC fails where PPO succeeds, highlighting a common problem in task design that many codebases share.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/sac-massive-sim/";
+          
+        },
+      },{id: "post-why-llms-can-t-let-go",
+        
+          title: "Why LLMs Can’t Let Go",
+        
+        description: "Large Language Models now have access to more context than ever before. A natural concern in this setting has been their ability to retrieve information from that context. We shed light on other problems that arise with larger context windows, not because the model cannot locate the relevant context, but because it cannot ignore the irrelevant context. Through this blog, we aim to motivate the community to think beyond scaling the context window and retrieving the right context, toward the model's ability to ignore what it does not need.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/remembering-everything/";
+          
+        },
+      },{id: "post-what-are-we-actually-evolving-four-flaws-in-darwin-gödel-machine-s-polyglot-environment",
+        
+          title: "What Are We Actually Evolving? Four Flaws in Darwin Gödel Machine’s Polyglot Environment...",
+        
+        description: "Self-evolving coding agents such as Darwin Gödel Machine (DGM) use their scores on a coding benchmark to guide changes to their own harnesses, such as their tools and workflows. We find four flaws in DGM’s adaptation of Aider’s Polyglot benchmark that make these scores an unreliable signal of which harness changes improve a coding agent. Later systems such as Huxley-Gödel Machine reuse the same evaluation setup and inherit these flaws. In this misconfigured Polyglot environment, agents can access hidden tests and solutions, task contracts and supporting files are missing, and most Java tests are skipped. Repairing the environment shifts the score of the same gpt-5.4-mini agent by up to 12 percentage points. This sensitivity to the evaluation setup warrants revisiting DGM’s reported gains on Polyglot, and it shows that a correct environment is a precondition for reliable self-evolving systems.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/polyglot-dgm/";
+          
+        },
+      },{id: "post-does-a-verlet-like-orbit-transformer-respect-the-mirror",
+        
+          title: "Does a Verlet-Like Orbit Transformer Respect the Mirror?",
+        
+        description: "Small transformers trained only on counter-clockwise planetary orbits have been described as close to Verlet, a textbook integration rule. Reflecting held-out orbits about their major axes leaves the physics intact, yet all five noise-free baseline models, trained on counter-clockwise orbits only, fail the mirror test while their rotation-equivariance error stays small. Adding mirrored orbits at the same training budget narrows the gap in steps, and for the recipe with input noise the outcome at 50% mirrored data is undetermined by the criterion set in advance.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/mirror-test/";
+          
+        },
+      },{id: "post-one-kernel-two-transformers-what-a-text-llm-megakernel-teaches-us-about-streaming-tts",
+        
+          title: "One Kernel, Two Transformers - What a Text-LLM Megakernel Teaches Us About Streaming...",
+        
+        description: "Persistent megakernels have made batch-one LLM decoding fast by removing launch overhead. I take one written for a 0.6B text model and reuse it, almost unchanged, for both transformer stages of a streaming codec-language-model TTS system. The speedups are real. So are two quality problems: the model inserts extra words, and it does not stop on its own.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/megakernel-reuse-streaming-tts/";
+          
+        },
+      },{id: "post-halpern-iteration-accelerates-solving-high-order-monotone-variational-inequalities",
+        
+          title: "Halpern Iteration Accelerates Solving High-Order Monotone Variational Inequalities",
+        
+        description: "In this blog post, we revisit the classical Halpern iteration in 1967 and show its new applications in designing second- and higher-order methods for solving smooth monotone variational inequalities (MVI).  By using a large-step inexact Halpern iteration, we propose a novel pth-order method Halpern-ATM, that achieves a fast convergence rate of Õ(T⁻ᵖ). This improves the best-known results for p ≥ 2 since 2012 and matches the classical extragradient method for p = 1.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/halpern-npe/";
+          
+        },
+      },{id: "post-from-densities-to-waves-one-recipe-for-the-geometries-of-flow-matching",
+        
+          title: "From densities to waves: one recipe for the geometries of flow matching",
+        
+        description: "Flow matching quietly assumes your data live in Euclidean space, but when each data point is itself a distribution the straight line and the L2 norm need replacing, and Wasserstein, the linear mixture and Fisher-Rao are the usual choices. We show that all three fall out of one recipe, a rule for how probability mass may change plus a price for each change, and watch the same two bumps slide or cross-fade under each. Run on complex amplitudes, the same recipe gives a fourth geometry, Fubini-Study, the only one with which a neural network can give a density zeros that survive its own small errors.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/from-densities-to-waves/";
+          
+        },
+      },{id: "post-telling-a-small-misaligned-model-it-39-s-being-evaluated-barely-moves-its-misalignment",
+        
+          title: "Telling a small misaligned model it's being evaluated barely moves its misalignment",
+        
+        description: "We trained a small open model on bad medical advice, then told it that it was being evaluated. Its answers stayed about as misaligned as before. The AI judge that scores those answers made a far bigger difference, which affects anyone measuring emergent misalignment or comparing results across papers.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/emergent-misalignment-evaluation-cue/";
+          
+        },
+      },{id: "post-does-recursion-depth-mean-difficulty-a-token-level-test-of-mixture-of-recursions",
+        
+          title: "Does Recursion Depth Mean Difficulty? A Token-Level Test of Mixture-of-Recursions",
+        
+        description: "Mixture-of-Recursions gives each token a recursion depth, and the original paper reads depth as a sign of how easily the next token can be predicted. We test that reading on the released 360M checkpoints. Depth is low for easy tokens and stops rising near the median token, the hardest tokens gain least from depth, and token-choice depth is almost a fixed function of the token.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/does-recursion-depth-mean-difficulty/";
+          
+        },
+      },{id: "post-sample-blog-post",
+        
+          title: "Sample Blog Post",
+        
+        description: "Your blog post's abstract. Please add your abstract or summary here and not in the main body of your text. Do not include math/latex or hyperlinks.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/distill-example/";
+          
+        },
+      },{id: "post-what-makes-a-good-toy-example-for-diffusion-models",
+        
+          title: "What Makes a Good Toy Example for Diffusion Models?",
+        
+        description: "Toys help us see diffusion algorithms at the level of distributions—but the moment we design a toy, we may also (without noticing) choose a side by baking in preferences. Using guidance in diffusion models, we examine how class separation and within-class branching shape what we conclude from a toy.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/diffusion-toy-design/";
+          
+        },
+      },{id: "post-consequence-persistence-admission-control-for-open-agent-meshes",
+        
+          title: "Consequence Persistence: Admission Control for Open Agent Meshes",
+        
+        description: "Open agent meshes can fail while every request stays valid. A consequence persistence layer checks a signed header before the payload, keeps a subjective viability score by identity and task, and makes viability fall much faster than it recovers. The price of a fresh identity, false isolation of long tasks, and the receiver's cost of holding a delay are left open.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/consequence-persistence/";
+          
+        },
+      },{id: "post-a-pass-is-not-a-guard",
+        
+          title: "A Pass Is Not a Guard",
+        
+        description: "A truncated tool call wrote a 16-line file while the agent reported success. Building a conformance suite around that case exposed a harder problem: nine ways our own measurement produced a confident wrong answer, and the rules we added to stop it.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/a-pass-is-not-a-guard/";
+          
+        },
+      },{id: "post-a-post-with-marimo-snippets",
+        
+          title: "a post with marimo snippets",
+        
+        description: "running Python in the browser with marimo",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/marimo/";
+          
+        },
+      },{id: "post-یک-نوشتهٔ-راست-چین",
+        
+          title: "یک نوشتهٔ راست‌چین",
+        
+        description: "نمونه‌ای از پشتیبانی زبان‌های راست‌چین",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/2027/blog/rtl/";
+          
+        },
+      },{id: "books-the-godfather",
+          title: 'The Godfather',
+          description: "",
+          section: "Books",handler: () => {
+              window.location.href = "/2027/books/the_godfather/";
+            },},{id: "news-a-simple-inline-announcement",
+          title: 'A simple inline announcement.',
+          description: "",
+          section: "News",},{id: "news-a-long-announcement-with-details",
+          title: 'A long announcement with details',
+          description: "",
+          section: "News",handler: () => {
+              window.location.href = "/2027/news/announcement_2/";
+            },},{id: "news-a-simple-inline-announcement-with-markdown-emoji-sparkles-smile",
+          title: 'A simple inline announcement with Markdown emoji! <img class="emoji" title=":sparkles:" alt=":sparkles:" src="https://github.githubassets.com/images/icons/emoji/unicode/2728.png" height="20" width="20"> <img class="emoji" title=":smile:" alt=":smile:" src="https://github.githubassets.com/images/icons/emoji/unicode/1f604.png" height="20" width="20">',
+          description: "",
+          section: "News",},{id: "projects-project-1",
+          title: 'project 1',
+          description: "with background image",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/1_project/";
+            },},{id: "projects-project-2",
+          title: 'project 2',
+          description: "a project with a background image and giscus comments",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/2_project/";
+            },},{id: "projects-project-3-with-very-long-name",
+          title: 'project 3 with very long name',
+          description: "a project that redirects to another website",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/3_project/";
+            },},{id: "projects-project-4",
+          title: 'project 4',
+          description: "another without an image",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/4_project/";
+            },},{id: "projects-project-5",
+          title: 'project 5',
+          description: "a project with a background image",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/5_project/";
+            },},{id: "projects-project-6",
+          title: 'project 6',
+          description: "a project with no image",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/6_project/";
+            },},{id: "projects-project-7",
+          title: 'project 7',
+          description: "with background image",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/7_project/";
+            },},{id: "projects-project-8",
+          title: 'project 8',
+          description: "an other project with a background image and giscus comments",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/8_project/";
+            },},{id: "projects-project-9",
+          title: 'project 9',
+          description: "another project with an image 🎉",
+          section: "Projects",handler: () => {
+              window.location.href = "/2027/projects/9_project/";
+            },},{id: "teachings-data-science-fundamentals",
+          title: 'Data Science Fundamentals',
+          description: "This course covers the foundational aspects of data science, including data collection, cleaning, analysis, and visualization. Students will learn practical skills for working with real-world datasets.",
+          section: "Teachings",handler: () => {
+              window.location.href = "/2027/teachings/data-science-fundamentals/";
+            },},{id: "teachings-introduction-to-machine-learning",
+          title: 'Introduction to Machine Learning',
+          description: "This course provides an introduction to machine learning concepts, algorithms, and applications. Students will learn about supervised and unsupervised learning, model evaluation, and practical implementations.",
+          section: "Teachings",handler: () => {
+              window.location.href = "/2027/teachings/introduction-to-machine-learning/";
+            },},{
+        id: 'social-cv',
+        title: 'CV',
+        section: 'Socials',
+        handler: () => {
+          window.open("/2027/assets/pdf/example_pdf.pdf", "_blank");
+        },
+      },{
+        id: 'social-email',
+        title: 'email',
+        section: 'Socials',
+        handler: () => {
+          window.open("mailto:%79%6F%75@%65%78%61%6D%70%6C%65.%63%6F%6D", "_blank");
+        },
+      },{
+        id: 'social-inspire',
+        title: 'Inspire HEP',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://inspirehep.net/authors/1010907", "_blank");
+        },
+      },{
+        id: 'social-rss',
+        title: 'RSS Feed',
+        section: 'Socials',
+        handler: () => {
+          window.open("/2027/feed.xml", "_blank");
+        },
+      },{
+        id: 'social-scholar',
+        title: 'Google Scholar',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://scholar.google.com/citations?user=qc6CJjYAAAAJ", "_blank");
+        },
+      },{
+        id: 'social-custom_social',
+        title: 'Custom_social',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://www.alberteinstein.com/", "_blank");
+        },
+      },{
+      id: 'light-theme',
+      title: 'Change theme to light',
+      description: 'Change the theme of the site to Light',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("light");
+      },
+    },
+    {
+      id: 'dark-theme',
+      title: 'Change theme to dark',
+      description: 'Change the theme of the site to Dark',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("dark");
+      },
+    },
+    {
+      id: 'system-theme',
+      title: 'Use system default theme',
+      description: 'Change the theme of the site to System Default',
+      section: 'Theme',
+      handler: () => {
+        setThemeSetting("system");
+      },
+    },];
+
+</script> <script src="/2027/assets/al_search/js/shortcut-key.js"></script> </body> </html>

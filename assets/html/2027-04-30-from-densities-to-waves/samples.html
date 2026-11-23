@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What samples see</title>
+<style>
+  :root { --bg:#fff; --fg:#1f2328; --muted:#6a737d; --grid:#e4e7eb; --panel:#fafbfc; --re:#1f77b4; --im:#d62728; --cur:#1f77b4; --ref:#8a929c; --ok:#2e7d32; --bad:#c62828; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --re:#5aa7e0; --im:#ff6b6b; --cur:#5aa7e0; --ref:#8a929c; --ok:#66bb6a; --bad:#ef5350; } }
+  :root[data-theme="dark"] { --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --re:#5aa7e0; --im:#ff6b6b; --cur:#5aa7e0; --ref:#8a929c; --ok:#66bb6a; --bad:#ef5350; }
+  html,body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:980px; margin:0 auto; padding:8px 16px 10px; box-sizing:border-box; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-bottom:8px; }
+  .controls label { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+  select, button { font:inherit; color:var(--fg); background:var(--panel); border:1px solid var(--grid); border-radius:6px; padding:3px 8px; }
+  button { cursor:pointer; }
+  .val { font-variant-numeric:tabular-nums; color:var(--muted); min-width:2.8em; display:inline-block; }
+  .row { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .cap { font-size:12px; color:var(--muted); text-align:center; margin-bottom:3px; }
+  canvas { width:100%; height:150px; display:block; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
+  .verdict { font-size:12.5px; margin-top:4px; text-align:center; font-variant-numeric:tabular-nums; color:var(--muted); }
+  .verdict b.ok { color:var(--ok); } .verdict b.bad { color:var(--bad); }
+  @media (max-width:700px) { .row { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="controls">
+    <label>phase χ(x)
+      <select id="kind">
+        <option value="none">none</option>
+        <option value="lin" selected>momentum, kx</option>
+        <option value="chirp">chirp, cx²</option>
+        <option value="rand">random smooth</option>
+      </select></label>
+    <label>strength <input id="s" type="range" min="0" max="4" step="0.05" value="2"><span class="val" id="sv"></span></label>
+    <label>samples <select id="n"><option>200</option><option selected>1000</option><option>5000</option></select></label>
+    <button id="redraw">draw new samples</button>
+  </div>
+  <div class="row">
+    <div><div class="cap">the amplitude ψ = √μ e<sup>iχ</sup>: Re, Im, and ±|ψ|</div><canvas id="amp"></canvas></div>
+    <div><div class="cap">samples in position, x ~ |ψ(x)|²</div><canvas id="hx"></canvas><div class="verdict" id="vx"></div></div>
+    <div><div class="cap">samples in momentum, p ~ |ψ̂(p)|²</div><canvas id="hp"></canvas><div class="verdict" id="vp"></div></div>
+  </div>
+  <div class="verdict" style="text-align:left;margin-top:8px">Filled bars: samples from ψ. Grey outline: an independent set of samples from the same Gaussian with no phase (χ = 0).
+    Each verdict is a two-sample Kolmogorov–Smirnov test at the 5% level.</div>
+</div>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const N = 400, XL = -7, XR = 7, dx = (XR - XL) / N, x = new Float64Array(N);
+  for (let i = 0; i < N; i++) x[i] = XL + (i + 0.5) * dx;
+  const NP = 300, PL = -9, PR = 9, dp = (PR - PL) / NP, p = new Float64Array(NP);
+  for (let j = 0; j < NP; j++) p[j] = PL + (j + 0.5) * dp;
+  let seed = 12345; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const randPhase = (() => { const c = []; for (let m = 1; m <= 6; m++) c.push([rnd() * 2 - 1, rnd() * 2 * Math.PI]); return c; })();
+  function amplitude(kind, s) {
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let i = 0; i < N; i++) { const X = x[i], env = Math.exp(-X * X / 4) / Math.pow(2 * Math.PI, 0.25);
+      let chi = 0;
+      if (kind === "lin") chi = s * X; else if (kind === "chirp") chi = 0.5 * s * X * X;
+      else if (kind === "rand") for (let m = 0; m < 6; m++) chi += s * randPhase[m][0] * Math.cos(0.7 * (m + 1) * X + randPhase[m][1]);
+      re[i] = env * Math.cos(chi); im[i] = env * Math.sin(chi); }
+    return [re, im];
+  }
+  function fourier(re, im) { const out = new Float64Array(NP), z = dx / Math.sqrt(2 * Math.PI);
+    for (let j = 0; j < NP; j++) { let R = 0, I = 0; for (let i = 0; i < N; i++) { const c = Math.cos(p[j] * x[i]), s = Math.sin(p[j] * x[i]);
+      R += re[i] * c + im[i] * s; I += im[i] * c - re[i] * s; } out[j] = (R * z) ** 2 + (I * z) ** 2; } return out; }
+  function sampler(dens, grid, step) { const C = new Float64Array(dens.length + 1);
+    for (let i = 0; i < dens.length; i++) C[i + 1] = C[i] + dens[i]; for (let i = 0; i < C.length; i++) C[i] /= C[C.length - 1];
+    return (n) => { const out = new Float64Array(n); for (let k = 0; k < n; k++) { const u = rnd(); let lo = 0, hi = dens.length;
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (C[mid] <= u) lo = mid; else hi = mid; }
+      const f = (u - C[lo]) / Math.max(1e-300, C[lo + 1] - C[lo]); out[k] = grid[0] - step / 2 + (lo + f) * step; } return out; }; }
+  function ks(a, b) { const A = Float64Array.from(a).sort(), B = Float64Array.from(b).sort(); let i = 0, j = 0, d = 0;
+    while (i < A.length && j < B.length) { if (A[i] <= B[j]) i++; else j++; d = Math.max(d, Math.abs(i / A.length - j / B.length)); } return d; }
+  function setup(cv) { const r = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * r) || cv.height !== Math.round(h * r)) { cv.width = Math.round(w * r); cv.height = Math.round(h * r); }
+    const g = cv.getContext("2d"); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, w, h); return [g, w, h]; }
+  function hist(cv, cur, ref, lo, hi) {
+    const B = 40, hc = new Float64Array(B), hr = new Float64Array(B), bw = (hi - lo) / B;
+    for (const v of cur) { const k = Math.floor((v - lo) / bw); if (k >= 0 && k < B) hc[k]++; }
+    for (const v of ref) { const k = Math.floor((v - lo) / bw); if (k >= 0 && k < B) hr[k]++; }
+    const [g, w, h] = setup(cv), pd = 4, mx = Math.max(...hc, ...hr) * 1.08, X = (k) => pd + k / B * (w - 2 * pd), Y = (c) => h - pd - c / mx * (h - 2 * pd);
+    g.fillStyle = css("--cur"); g.globalAlpha = 0.45; for (let k = 0; k < B; k++) g.fillRect(X(k) + 0.5, Y(hc[k]), X(k + 1) - X(k) - 1, h - pd - Y(hc[k]));
+    g.globalAlpha = 1; g.strokeStyle = css("--ref"); g.lineWidth = 1.5; g.beginPath(); g.moveTo(X(0), Y(0));
+    for (let k = 0; k < B; k++) { g.lineTo(X(k), Y(hr[k])); g.lineTo(X(k + 1), Y(hr[k])); } g.lineTo(X(B), Y(0)); g.stroke();
+  }
+  function verdict(el, d, n) { const crit = 1.358 * Math.sqrt(2 / n), same = d < crit;
+    el.innerHTML = `KS distance ${d.toFixed(3)} (5% threshold ${crit.toFixed(3)}): <b class="${same ? "ok" : "bad"}">${same ? "indistinguishable from χ = 0" : "distinguishable from χ = 0"}</b>`; }
+  let cache = null;
+  function compute() { const kind = $("kind").value, s = +$("s").value; const [re, im] = amplitude(kind, s), [r0, i0] = amplitude("none", 0);
+    const mx = re.map((v, i) => v * v + im[i] * im[i]), mp = fourier(re, im), mp0 = fourier(r0, i0), mx0 = r0.map((v) => v * v);
+    cache = { re, im, sx: sampler(mx, x, dx), sp: sampler(mp, p, dp), sx0: sampler(mx0, x, dx), sp0: sampler(mp0, p, dp) }; }
+  function render() {
+    $("sv").textContent = (+$("s").value).toFixed(2);
+    const { re, im, sx, sp, sx0, sp0 } = cache, n = +$("n").value;
+    { const [g, w, h] = setup($("amp")), pd = 4, X = (i) => pd + i / (N - 1) * (w - 2 * pd), amax = 0.7, Y = (v) => h / 2 - v / amax * (h / 2 - pd);
+      g.strokeStyle = css("--grid"); g.beginPath(); g.moveTo(pd, h / 2); g.lineTo(w - pd, h / 2); g.stroke();
+      for (const [arr, col, lw] of [[re.map((v, i) => Math.hypot(v, im[i])), css("--muted"), 1], [re.map((v, i) => -Math.hypot(v, im[i])), css("--muted"), 1], [re, css("--re"), 1.6], [im, css("--im"), 1.6]]) {
+        g.beginPath(); for (let i = 0; i < N; i++) (i ? g.lineTo : g.moveTo).call(g, X(i), Y(arr[i])); g.strokeStyle = col; g.lineWidth = lw; g.stroke(); } }
+    const ax = sx(n), ax0 = sx0(n), ap = sp(n), ap0 = sp0(n);
+    hist($("hx"), ax, ax0, XL, XR); hist($("hp"), ap, ap0, PL, PR);
+    verdict($("vx"), ks(ax, ax0), n); verdict($("vp"), ks(ap, ap0), n);
+  }
+  $("kind").onchange = () => { compute(); render(); }; $("s").oninput = () => { compute(); render(); };
+  $("n").onchange = render; $("redraw").onclick = render;
+  window.addEventListener("resize", render);
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  compute(); render();
+})();
+</script>
+</body>
+</html>

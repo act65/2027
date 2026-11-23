@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flows between distributions</title>
+<style>
+  :root { --bg:#fff; --fg:#1f2328; --muted:#6a737d; --grid:#e4e7eb; --panel:#fafbfc; --src:#8a929c; --dat:#ff7f0e; --c0:#1f77b4; --c1:#9467bd; --c2:#d62728; --arrow:#2ca02c; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --src:#8a929c; --dat:#ffa04a; --c0:#5aa7e0; --c1:#b48ae0; --c2:#ff6b6b; --arrow:#5cc85c; } }
+  :root[data-theme="dark"] { --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --src:#8a929c; --dat:#ffa04a; --c0:#5aa7e0; --c1:#b48ae0; --c2:#ff6b6b; --arrow:#5cc85c; }
+  html,body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:980px; margin:0 auto; padding:8px 16px 10px; box-sizing:border-box; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .head { font-weight:600; font-size:13px; text-align:center; margin-bottom:3px; }
+  canvas { width:100%; height:250px; display:block; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
+  @media (max-width:640px) { .row { grid-template-columns:1fr; } canvas { height:220px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <div><div class="head">the space of distributions: Gaussians 𝒩(m, s²)</div><canvas id="space"></canvas></div>
+    <div><div class="head">the three marked points, as densities on x</div><canvas id="dens"></canvas></div>
+  </div>
+</div>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  // endpoints (m, s) and the exact Fisher–Rao geodesic between them: in (u, s) = (m/√2, s) the Gaussians are the
+  // hyperbolic half-plane (up to a factor 2), whose geodesics are semicircles centred on the axis s = 0.
+  const P0 = [-1.25, 0.95], P1 = [1.45, 0.42], R2 = Math.SQRT2;
+  const u0 = P0[0] / R2, u1 = P1[0] / R2, s0 = P0[1], s1 = P1[1];
+  const c = (u1 * u1 + s1 * s1 - u0 * u0 - s0 * s0) / (2 * (u1 - u0)), R = Math.hypot(u0 - c, s0);
+  const ph0 = Math.atan2(s0, u0 - c), ph1 = Math.atan2(s1, u1 - c), tau = (p) => Math.log(Math.tan(p / 2));
+  function geo(t) { const p = 2 * Math.atan(Math.exp((1 - t) * tau(ph0) + t * tau(ph1))); return [R2 * (c + R * Math.cos(p)), R * Math.sin(p)]; }   // constant speed
+  // fixed pseudo-random clouds: source draws and data points
+  let seed = 7; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+  const src = [], dat = [];
+  for (let k = 0; k < 26; k++) src.push([P0[0] + 0.45 * gauss(), Math.max(0.12, P0[1] * Math.exp(0.22 * gauss()))]);
+  for (let k = 0; k < 26; k++) { const b = k % 2 ? [1.45, 0.42] : [0.55, 0.62]; dat.push([b[0] + 0.18 * gauss(), Math.max(0.12, b[1] * Math.exp(0.12 * gauss()))]); }
+  const T = [0, 0.5, 1], COL = ["--c0", "--c1", "--c2"];
+  function setup(cv) { const r = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * r) || cv.height !== Math.round(h * r)) { cv.width = Math.round(w * r); cv.height = Math.round(h * r); }
+    const g = cv.getContext("2d"); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, w, h); return [g, w, h]; }
+  function arrowHead(g, x, y, ang, sz) { g.beginPath(); g.moveTo(x, y); g.lineTo(x - sz * Math.cos(ang - 0.45), y - sz * Math.sin(ang - 0.45));
+    g.lineTo(x - sz * Math.cos(ang + 0.45), y - sz * Math.sin(ang + 0.45)); g.closePath(); g.fill(); }
+  function drawSpace() {
+    const [g, w, h] = setup($("space")), pl = 30, pr = 12, pt = 12, pb = 28, MR = [-3, 3], SR = [0, 1.5];
+    const X = (m) => pl + (m - MR[0]) / (MR[1] - MR[0]) * (w - pl - pr), Y = (s) => h - pb - (s - SR[0]) / (SR[1] - SR[0]) * (h - pt - pb);
+    g.font = "12px system-ui, sans-serif";
+    // axes
+    g.strokeStyle = css("--muted"); g.lineWidth = 1.2; g.beginPath(); g.moveTo(X(MR[0]), Y(0)); g.lineTo(X(MR[1]), Y(0)); g.moveTo(X(0), Y(0)); g.lineTo(X(0), Y(SR[1])); g.stroke();
+    g.fillStyle = css("--muted"); g.textAlign = "right"; g.fillText("mean m", X(MR[1]), Y(0) + 18); g.textAlign = "left"; g.fillText("width s", X(0) + 5, Y(SR[1]) + 10);
+    g.textAlign = "center"; g.font = "11px system-ui, sans-serif"; g.fillText("s = 0: no Gaussians here", X(-1.9), Y(0) + 18);
+    // clouds
+    for (const [m, s] of src) { g.beginPath(); g.arc(X(m), Y(s), 2.6, 0, 2 * Math.PI); g.fillStyle = css("--src"); g.globalAlpha = 0.55; g.fill(); }
+    for (const [m, s] of dat) { g.beginPath(); g.arc(X(m), Y(s), 2.6, 0, 2 * Math.PI); g.fillStyle = css("--dat"); g.globalAlpha = 0.7; g.fill(); }
+    g.globalAlpha = 1;
+    g.font = "12px system-ui, sans-serif"; g.fillStyle = css("--src"); g.textAlign = "center"; g.fillText("source", X(-1.9), Y(1.38));
+    g.fillStyle = css("--dat"); g.fillText("data", X(2.35), Y(0.2));
+    // Euclidean chord, faint
+    g.strokeStyle = css("--muted"); g.globalAlpha = 0.6; g.setLineDash([4, 4]); g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(X(P0[0]), Y(P0[1])); g.lineTo(X(P1[0]), Y(P1[1])); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+    // geodesic
+    g.strokeStyle = css("--fg"); g.lineWidth = 2; g.beginPath();
+    for (let k = 0; k <= 120; k++) { const [m, s] = geo(k / 120); k ? g.lineTo(X(m), Y(s)) : g.moveTo(X(m), Y(s)); } g.stroke();
+    // velocity arrow at t = 1/2
+    const [mA, sA] = geo(0.5), [mB, sB] = geo(0.5 + 0.02), ang = Math.atan2(Y(sB) - Y(sA), X(mB) - X(mA)), L = 46;
+    const xe = X(mA) + L * Math.cos(ang), ye = Y(sA) + L * Math.sin(ang);
+    g.strokeStyle = css("--arrow"); g.fillStyle = css("--arrow"); g.lineWidth = 2.2; g.beginPath(); g.moveTo(X(mA), Y(sA)); g.lineTo(xe, ye); g.stroke(); arrowHead(g, xe, ye, ang, 9);
+    g.font = "italic 12px system-ui, sans-serif"; g.textAlign = "left"; g.fillText("v", xe + 4, ye - 8); g.font = "10px system-ui, sans-serif"; g.fillText("θ", xe + 11, ye - 5);
+    g.font = "12px system-ui, sans-serif"; g.fillText("(μ", xe + 19, ye - 8); g.font = "10px system-ui, sans-serif"; g.fillText("t", xe + 33, ye - 5); g.font = "12px system-ui, sans-serif"; g.fillText(", t)", xe + 38, ye - 8);
+    // marked points
+    T.forEach((t, k) => { const [m, s] = geo(t); g.beginPath(); g.arc(X(m), Y(s), 5.5, 0, 2 * Math.PI); g.fillStyle = css(COL[k]); g.fill();
+      g.lineWidth = 1.5; g.strokeStyle = css("--bg"); g.stroke(); });
+    const lab = [["μ₀", -14, 16], ["μₜ", -2, -12], ["μ₁", 16, 16]];
+    T.forEach((t, k) => { const [m, s] = geo(t); g.fillStyle = css(COL[k]); g.textAlign = "center"; g.font = "bold 12px system-ui, sans-serif"; g.fillText(lab[k][0], X(m) + lab[k][1], Y(s) + lab[k][2]); });
+    g.font = "11px system-ui, sans-serif"; g.fillStyle = css("--muted"); g.textAlign = "left";
+  }
+  function drawDens() {
+    const [g, w, h] = setup($("dens")), pl = 12, pr = 12, pt = 12, pb = 28, XR = [-4, 4];
+    const X = (x) => pl + (x - XR[0]) / (XR[1] - XR[0]) * (w - pl - pr);
+    const pts = T.map(geo); let ym = 0; for (const [m, s] of pts) ym = Math.max(ym, 1 / (s * Math.sqrt(2 * Math.PI))); ym *= 1.12;
+    const Y = (v) => h - pb - v / ym * (h - pt - pb);
+    g.strokeStyle = css("--muted"); g.lineWidth = 1.2; g.beginPath(); g.moveTo(X(XR[0]), Y(0)); g.lineTo(X(XR[1]), Y(0)); g.stroke();
+    g.fillStyle = css("--muted"); g.font = "12px system-ui, sans-serif"; g.textAlign = "right"; g.fillText("x", X(XR[1]), Y(0) + 18);
+    pts.forEach(([m, s], k) => { const col = css(COL[k]); g.beginPath();
+      for (let i = 0; i <= 300; i++) { const x = XR[0] + (XR[1] - XR[0]) * i / 300, v = Math.exp(-0.5 * ((x - m) / s) ** 2) / (s * Math.sqrt(2 * Math.PI)); i ? g.lineTo(X(x), Y(v)) : g.moveTo(X(x), Y(v)); }
+      g.lineTo(X(XR[1]), Y(0)); g.lineTo(X(XR[0]), Y(0)); g.closePath(); g.globalAlpha = 0.18; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
+      g.beginPath(); for (let i = 0; i <= 300; i++) { const x = XR[0] + (XR[1] - XR[0]) * i / 300, v = Math.exp(-0.5 * ((x - m) / s) ** 2) / (s * Math.sqrt(2 * Math.PI)); i ? g.lineTo(X(x), Y(v)) : g.moveTo(X(x), Y(v)); }
+      g.strokeStyle = col; g.lineWidth = 2; g.stroke();
+      const top = Y(1 / (s * Math.sqrt(2 * Math.PI))); g.fillStyle = col; g.textAlign = "center"; g.font = "bold 12px system-ui, sans-serif";
+      g.fillText(["μ₀", "μₜ (t = ½)", "μ₁"][k], X(m), top - 6); });
+  }
+  function render() { drawSpace(); drawDens(); }
+  window.addEventListener("resize", render);
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>
