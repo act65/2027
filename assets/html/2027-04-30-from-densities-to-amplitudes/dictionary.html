@@ -27,8 +27,16 @@
   .read b { color:var(--fg); font-weight:600; }
   canvas { width:100%; height:80px; display:block; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
   .note { font-size:12px; color:var(--muted); margin-top:6px; }
-  .sw { display:inline-block; width:14px; height:3px; vertical-align:middle; margin:0 4px 0 8px; }
   @media (max-width:640px) { .grid { grid-template-columns:1fr; } canvas { height:72px; } }
+  /* legend swatches, shared by every widget of this post: line, dashed line, filled area, outline, dot, ring, triangle */
+  .lg { display:inline-block; vertical-align:middle; margin:0 4px 0 8px; box-sizing:border-box; }
+  .lg-line { width:16px; height:0; border-top:2.5px solid currentColor; }
+  .lg-dash { width:16px; height:0; border-top:2px dashed currentColor; }
+  .lg-fill { width:12px; height:10px; border:1.5px solid currentColor; border-radius:2px; background:color-mix(in srgb, currentColor 35%, transparent); }
+  .lg-box { width:12px; height:10px; border:1.5px solid currentColor; border-radius:2px; }
+  .lg-dot { width:9px; height:9px; border-radius:50%; background:currentColor; }
+  .lg-ring { width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; }
+  .lg-tri { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid currentColor; }
 </style>
 </head>
 <body>
@@ -40,7 +48,6 @@
       <option value="excited">a signed state with one zero</option></select></label>
     <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.5"><span class="val" id="tv"></span></label>
     <button id="play">play</button>
-    <label>show <select id="view"><option value="mu">density μₜ</option><option value="dot">regression target ∂μ/∂t</option></select></label>
     <label id="Ld">separation d <input id="d" type="range" min="0.5" max="6" step="0.05" value="3.5"><span class="val" id="dv"></span></label>
     <label id="Lk">target phase e<sup>ikx</sup>, k <input id="k" type="range" min="0" max="12" step="0.25" value="6"><span class="val" id="kv"></span></label>
   </div>
@@ -54,10 +61,8 @@
     <div class="lab fsrow"><b style="color:var(--fs)">Fubini-Study</b><span>∂ψ/∂t = −iHψ, μ = |ψ|²</span></div>
     <canvas id="c3" class="fsrow"></canvas><div class="read fsrow" id="r3"></div>
   </div>
-  <div class="note" id="note-dot" style="display:none">Filled: ∂μ/∂t, the change of density that the regression target produces at this t (zero line in the middle; one vertical scale for all rows).
-    <span class="fsrow">Fubini-Study row, thin lines: the amplitude velocity ψ̇<sub>t</sub>, <span class="sw" style="background:var(--fs)"></span>Re <span class="sw" style="background:var(--im)"></span>Im.</span></div>
-  <div class="note" id="note-mu">Filled: μ<sub>t</sub>; dashed grey: μ<sub>0</sub> and μ<sub>1</sub>; one vertical scale for all rows.
-    <span class="fsrow">Fubini-Study row, thin lines: <span class="sw" style="background:var(--fs)"></span>Re ψ<sub>t</sub><span class="sw" style="background:var(--im)"></span>Im ψ<sub>t</sub>.</span>
+  <div class="note" id="note-mu"><span class="lg lg-fill" style="color:var(--muted)"></span>μ<sub>t</sub>, in each row's colour <span class="lg lg-dash" style="color:var(--ghost)"></span>μ<sub>0</sub> and μ<sub>1</sub>; one vertical scale for all rows.
+    <span class="fsrow">Fubini-Study row, thin lines: <span class="lg lg-line" style="color:var(--fs)"></span>Re ψ<sub>t</sub><span class="lg lg-line" style="color:var(--im)"></span>Im ψ<sub>t</sub>.</span>
 </div>
 </div>
 <script>
@@ -165,26 +170,16 @@
   // exact t-derivative of the slerp coefficients (for the amplitude velocity ψ̇_t)
   const dslerp = (t, c) => { const th = Math.acos(Math.max(-1, Math.min(1, c))); return th < 1e-9 ? [-1, 1] : [-th * Math.cos((1 - t) * th) / Math.sin(th), th * Math.cos(t * th) / Math.sin(th)]; };
   function render() {
-    const t = +$("t").value, l = 0, dot = $("view").value === "dot";
+    const t = +$("t").value, l = 0;
     $("tv").textContent = t.toFixed(2); $("dv").textContent = (+$("d").value).toFixed(2); $("kv").textContent = (+$("k").value).toFixed(2);
     const { a0, r1, i1, m0, m1, bc, F, W2 } = S;
     const R = rows(t, l);
     let { w2, fr, mix, fs, re, im } = R;
-    if (dot) { // central difference in t of each row's density; FS thin lines show the amplitude velocity ψ̇_t
-      const h = 0.02, t0 = Math.max(0, t - h), t1 = Math.min(1, t + h), A = rows(t0, l), B = rows(t1, l), D = (u, v) => u && v ? v.map((y, i) => (y - u[i]) / (t1 - t0)) : null;
-      w2 = D(A.w2, B.w2); fr = D(A.fr, B.fr); mix = D(A.mix, B.mix); fs = D(A.fs, B.fs);
-      const [dp, dq] = dslerp(t, F); re = a0.map((v, i) => dp * v + dq * r1[i]); im = i1.map((v) => dq * v);
-      const ymax = S.yDot, amax = S.aDot;
-      draw($("c0"), w2, ymax, css("--w2"), [], null, true); draw($("c1"), fr, ymax, css("--fr"), [], null, true);
-      draw($("c2"), mix, ymax, css("--mix"), [], null, true); draw($("c3"), fs, ymax, css("--fs"), [], { re, im, amax }, true);
-    } else {
     const ymax = S.yMu, amax = S.aMu;
     const gh = [m0, m1];
     draw($("c0"), w2, ymax, css("--w2"), gh); draw($("c1"), fr, ymax, css("--fr"), gh);
     draw($("c2"), mix, ymax, css("--mix"), gh); draw($("c3"), fs, ymax, css("--fs"), gh, { re, im, amax });
-    }
     ({ w2, fr, mix, fs } = R);
-    $("note-mu").style.display = dot ? "none" : ""; $("note-dot").style.display = dot ? "" : "none";
     $("r0").innerHTML = `W₂ = <b>${W2.toFixed(2)}</b><br>mass <b>${mass(w2).toFixed(2)}</b>`;
     $("r1").innerHTML = `d<sub>FR</sub> = <b>${(2 * Math.acos(bc)).toFixed(2)}</b><br>BC = ${bc.toFixed(3)}, mass <b>${mass(fr).toFixed(2)}</b>`;
     $("r2").innerHTML = `‖μ₁ − μ₀‖<sub>L²</sub> = <b>${S.L2.toFixed(2)}</b><br>mass <b>${mass(mix).toFixed(2)}</b>`;
@@ -194,14 +189,14 @@
   function tick(ts) { if (!playing) return; if (last) { let v = +$("t").value + dir * (ts - last) / 2500;
       if (v >= 1) { v = 1; dir = -1; } if (v <= 0) { v = 0; dir = 1; } $("t").value = v; render(); } last = ts; requestAnimationFrame(tick); }
   $("play").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "pause" : "play"; last = 0; if (playing) requestAnimationFrame(tick); };
-  $("t").oninput = render; $("view").onchange = render;
+  $("t").oninput = render;
   for (const id of ["d", "k"]) $(id).oninput = () => { build(); render(); };
   $("preset").onchange = () => { if ($("preset").value === "packet" && +$("k").value === 0) $("k").value = 6; build(); render(); };
   window.addEventListener("resize", render);
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
   // URL options: ?rows=3 hides the Fubini-Study row (used before it is defined); ?d=..&k=..&t=.. set the sliders
   const Q = new URLSearchParams(location.search);
-  for (const id of ["d", "k", "t", "view"]) if (Q.has(id)) $(id).value = Q.get(id);
+  for (const id of ["d", "k", "t"]) if (Q.has(id)) $(id).value = Q.get(id);
   if (["gauss", "packet", "excited"].includes(Q.get("target"))) $("preset").value = Q.get("target");
   if (Q.get("rows") === "3") { document.querySelectorAll(".fsrow").forEach((el) => el.style.display = "none"); $("Lk").style.display = "none"; }
   build(); render();

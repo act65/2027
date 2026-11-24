@@ -24,15 +24,21 @@
   canvas { width:100%; height:320px; display:block; background:var(--panel); border:1px solid var(--grid); border-radius:4px; touch-action:none; }
   .read { font-size:12.5px; color:var(--muted); margin-top:6px; font-variant-numeric:tabular-nums; }
   .read b { color:var(--fg); }
-  .sw { display:inline-block; width:16px; height:3px; vertical-align:middle; margin:0 4px 0 2px; }
   @media (max-width:640px) { .row { grid-template-columns:1fr; } canvas { height:260px; } }
+  /* legend swatches, shared by every widget of this post: line, dashed line, filled area, outline, dot, ring, triangle */
+  .lg { display:inline-block; vertical-align:middle; margin:0 4px 0 8px; box-sizing:border-box; }
+  .lg-line { width:16px; height:0; border-top:2.5px solid currentColor; }
+  .lg-dash { width:16px; height:0; border-top:2px dashed currentColor; }
+  .lg-fill { width:12px; height:10px; border:1.5px solid currentColor; border-radius:2px; background:color-mix(in srgb, currentColor 35%, transparent); }
+  .lg-box { width:12px; height:10px; border:1.5px solid currentColor; border-radius:2px; }
+  .lg-dot { width:9px; height:9px; border-radius:50%; background:currentColor; }
+  .lg-ring { width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; }
+  .lg-tri { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid currentColor; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="controls">
-    <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.5"><span class="val" id="tv"></span></label>
-    <button id="play">play</button>
     <label><input id="balls" type="checkbox" checked> unit balls (the price of a step)</label>
     <button id="reset">reset endpoints</button>
   </div>
@@ -108,12 +114,10 @@
     if ($("balls").checked) for (const m of gridPts) for (const [kind, col, dash] of [["mix", css("--mix"), [3, 3]], ["fr", css("--fr"), []]]) {
       poly(g, ball(m, kind).map(map), true); g.strokeStyle = col; g.globalAlpha = 0.75; g.lineWidth = 1.1; g.setLineDash(dash); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
     // paths
-    const t = +$("t").value;
     for (const [f, col] of [[mixAt, css("--mix")], [frAt, css("--fr")]]) {
       const pts = []; for (let k = 0; k <= 120; k++) pts.push(map(f(k / 120)));
       poly(g, pts); g.strokeStyle = col; g.lineWidth = 2.2; g.stroke();
-      g.fillStyle = col; for (let k = 0; k <= STEPS; k++) { const q = map(f(k / STEPS)); g.beginPath(); g.arc(q[0], q[1], 2.6, 0, 7); g.fill(); }
-      const q = map(f(t)); g.beginPath(); g.arc(q[0], q[1], 6, 0, 7); g.fill(); g.strokeStyle = css("--bg"); g.lineWidth = 1.5; g.stroke(); }
+      g.fillStyle = col; for (let k = 0; k <= STEPS; k++) { const q = map(f(k / STEPS)); g.beginPath(); g.arc(q[0], q[1], 2.6, 0, 7); g.fill(); } }
     // endpoints
     for (const [m, nm] of [[M0, "μ₀"], [M1, "μ₁"]]) { const q = map(m); g.beginPath(); g.arc(q[0], q[1], 7, 0, 7);
       g.fillStyle = css("--bg"); g.fill(); g.strokeStyle = ink; g.lineWidth = 2; g.stroke(); label(g, nm, q[0], q[1] - 11, ink); }
@@ -121,13 +125,12 @@
 
   const f3 = (m) => "(" + m.map((v) => v.toFixed(2)).join(", ") + ")";
   function render() {
-    const t = +$("t").value; $("tv").textContent = t.toFixed(2);
     drawPanel($("tri"), (m) => P(m), false); drawPanel($("sph"), Qm, true);
     const bc = dot(M0.map(Math.sqrt), M1.map(Math.sqrt)), l2 = Math.sqrt(M0.reduce((a, v, i) => a + (v - M1[i]) ** 2, 0));
     $("read").innerHTML =
-      `<span class="sw" style="background:var(--mix)"></span>mixture: straight in μ, ‖μ₁ − μ₀‖ = <b>${l2.toFixed(2)}</b>; at t, μ = <b>${f3(mixAt(t))}</b><br>` +
-      `<span class="sw" style="background:var(--fr)"></span>Fisher-Rao: straight (a great circle) in √μ, d<sub>FR</sub> = 2 arccos BC = <b>${(2 * Math.acos(Math.min(1, bc))).toFixed(2)}</b>; at t, μ = <b>${f3(frAt(t))}</b><br>` +
-      (($("balls").checked) ? `Unit balls: <span class="sw" style="background:var(--mix)"></span>dashed, the same step size under the flat price; <span class="sw" style="background:var(--fr)"></span>solid, under Fisher-Rao.` : "");
+      `<span class="lg lg-line" style="color:var(--mix)"></span>mixture: straight in μ, ‖μ₁ − μ₀‖ = <b>${l2.toFixed(2)}</b><br>` +
+      `<span class="lg lg-line" style="color:var(--fr)"></span>Fisher-Rao: straight (a great circle) in √μ, d<sub>FR</sub> = 2 arccos BC = <b>${(2 * Math.acos(Math.min(1, bc))).toFixed(2)}</b><br>` +
+      (($("balls").checked) ? `Unit balls: <span class="lg lg-dash" style="color:var(--mix)"></span>the same step size under the flat price; <span class="lg lg-line" style="color:var(--fr)"></span>under Fisher-Rao.` : "");
   }
 
   // dragging endpoints on the triangle
@@ -139,11 +142,7 @@
   cvT.addEventListener("pointerup", () => { drag = null; });
   $("reset").onclick = () => { M0 = DEF0.slice(); M1 = DEF1.slice(); render(); };
 
-  let playing = false, dir = 1, last = 0;
-  function tick(ts) { if (!playing) return; if (last) { let v = +$("t").value + dir * (ts - last) / 2500;
-      if (v >= 1) { v = 1; dir = -1; } if (v <= 0) { v = 0; dir = 1; } $("t").value = v; render(); } last = ts; requestAnimationFrame(tick); }
-  $("play").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "pause" : "play"; last = 0; if (playing) requestAnimationFrame(tick); };
-  $("t").oninput = render; $("balls").onchange = render;
+  $("balls").onchange = render;
   window.addEventListener("resize", render);
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
   render();

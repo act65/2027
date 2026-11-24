@@ -22,6 +22,15 @@
   .read { font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; } .read b { color:var(--fg); }
   .note { font-size:12.5px; color:var(--muted); margin-top:8px; }
   @media (max-width:640px) { .grid { grid-template-columns:1fr; } canvas { height:96px; } }
+  /* legend swatches, shared by every widget of this post: line, dashed line, filled area, outline, dot, ring, triangle */
+  .lg { display:inline-block; vertical-align:middle; margin:0 4px 0 8px; box-sizing:border-box; }
+  .lg-line { width:16px; height:0; border-top:2.5px solid currentColor; }
+  .lg-dash { width:16px; height:0; border-top:2px dashed currentColor; }
+  .lg-fill { width:12px; height:10px; border:1.5px solid currentColor; border-radius:2px; background:color-mix(in srgb, currentColor 35%, transparent); }
+  .lg-box { width:12px; height:10px; border:1.5px solid currentColor; border-radius:2px; }
+  .lg-dot { width:9px; height:9px; border-radius:50%; background:currentColor; }
+  .lg-ring { width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; }
+  .lg-tri { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid currentColor; }
 </style>
 </head>
 <body>
@@ -40,8 +49,8 @@
     <div class="lab"><b style="color:var(--fs)">Fubini-Study</b><span>ψ<sub>t</sub> = aψ<sub>0</sub> + bψ<sub>1</sub>; thin line: ψ<sub>t</sub></span></div>
     <canvas id="cs"></canvas><div class="read" id="rs"></div>
   </div>
-  <div class="note">Source: a Gaussian with no zeros, centred at x = 0.5. Target: |h<sub>n</sub>|², the n-th Hermite function squared, with n zeros (dashed grey: both endpoints).
-    Filled: μ<sub>t</sub> along the geodesic. Red marks: zeros of μ<sub>t</sub>.
+  <div class="note">Source: a Gaussian with no zeros, centred at x = 0.5. Target: |h<sub>n</sub>|², the n-th Hermite function squared, with n zeros.
+    <span class="lg lg-dash" style="color:var(--ghost)"></span>both endpoints <span class="lg lg-fill" style="color:var(--muted)"></span>μ<sub>t</sub> along the geodesic, in each row's colour <span class="lg lg-tri" style="color:var(--zero)"></span>zeros of μ<sub>t</sub>.
     ℓ: each geometry's output is blurred at scale ℓ, namely the transport map T for Wasserstein, √μ for Fisher-Rao and ψ for Fubini-Study. ℓ = 0: the exact geodesics.</div>
 </div>
 <script>
