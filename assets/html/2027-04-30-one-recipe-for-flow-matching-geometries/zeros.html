@@ -38,7 +38,7 @@
   <div class="controls">
     <label>target <select id="n"><option value="1">one zero</option><option value="2" selected>two zeros</option><option value="3">three zeros</option></select></label>
     <label>network smoothness ℓ <input id="eps" type="range" min="0" max="0.4" step="0.01" value="0.05"><span class="val" id="ev"></span></label>
-    <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.3"><span class="val" id="tv"></span></label>
+    <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.9"><span class="val" id="tv"></span></label>
     <button id="play">play</button>
   </div>
   <div class="grid">
@@ -165,11 +165,9 @@
       g.beginPath(); let on = false; for (let i = 0; i < N; i++) { if (Math.abs(x[i]) > XV) continue; const P = [X(x[i]), mid - ps[i] * A]; on ? g.lineTo(...P) : g.moveTo(...P); on = true; }
       g.strokeStyle = css("--fs"); g.globalAlpha = 0.55; g.lineWidth = 1; g.stroke(); g.globalAlpha = 1; });
     const inView = (zs) => zs.filter((z) => Math.abs(z) <= XV).length;
-    $("rw").innerHTML = S.eps > 0 ? `zeros: <b>0</b><br>dips only: a smooth map has finite slope`
-      : `zeros: <b>${wz.length}</b>${t > 0 && t < 1 ? "<br>there from the start: the exact map is not smooth" : ""}`;
-    $("rr").innerHTML = S.eps > 0 ? `zeros: <b>0</b><br>dips only: the blurred √μ stays positive`
-      : `zeros: <b>${frz.length}</b>${t < 1 ? "<br>none before t = 1" : ""}`;
-    $("rs").innerHTML = `zeros: <b>${fsz.length}</b>${fsz.length > inView(fsz) ? ` (${fsz.length - inView(fsz)} out of view)` : ""}<br>${fsz.length ? "made by cancellation" : "none yet; they form by cancellation"}`;
+    $("rw").innerHTML = `zeros: <b>${wz.length}</b>`;
+    $("rr").innerHTML = `zeros: <b>${frz.length}</b>`;
+    $("rs").innerHTML = `zeros: <b>${fsz.length}</b>${fsz.length > inView(fsz) ? ` (${fsz.length - inView(fsz)} out of view)` : ""}`;
   }
   let playing = false, dir = 1, last = 0;
   function tick(ts) { if (!playing) return; if (last) { let v = +$("t").value + dir * (ts - last) / 4000;
