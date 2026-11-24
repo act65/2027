@@ -36,7 +36,7 @@
   </div>
   <div class="cols">
     <div>
-      <div class="cap"><b>The Gaussians 𝒩(m, s²) as points.</b> Drag μ₀ and μ₁.</div>
+      <div class="cap"><b>The Gaussians 𝒩(m, w²) as points.</b> Drag μ₀ and μ₁.</div>
       <canvas id="plane"></canvas>
     </div>
     <div>
@@ -47,10 +47,10 @@
     </div>
   </div>
   <div class="note">
-    <span style="color:var(--w2)">●</span> Wasserstein: μ<sub>t</sub> stays a single Gaussian, moving along the straight line (in one dimension, W₂² between Gaussians is Δm² + Δs²).
-    <span style="color:var(--mix)">○</span> Mixture: (1 − t)μ₀ + tμ₁, two components fixed at μ₀ and μ₁ whose weights shift.
-    <span style="color:var(--fr)">●</span> Fisher-Rao: (a√μ₀ + b√μ₁)² = a²μ₀ + b²μ₁ + 2ab·BC·ν, three components; ν is the normalised √(μ₀μ₁), a fixed Gaussian between the two.
-    Marker area is proportional to weight.
+    Each marker is a Gaussian component of μ<sub>t</sub>; marker area is proportional to its weight.
+    <span style="color:var(--w2)">●</span> Wasserstein: one component.
+    <span style="color:var(--mix)">○</span> Mixture: (1 − t)μ₀ + tμ₁, components at μ₀ and μ₁.
+    <span style="color:var(--fr)">●</span> Fisher-Rao: (a√μ₀ + b√μ₁)² = a²μ₀ + b²μ₁ + 2ab·BC·ν, components at μ₀, μ₁ and ν, the normalised √(μ₀μ₁).
   </div>
 </div>
 <script>

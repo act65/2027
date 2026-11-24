@@ -42,11 +42,7 @@
   </div>
   <div class="note">Source: a Gaussian with no zeros, centred at x = 0.5. Target: |h<sub>n</sub>|², the n-th Hermite function squared, with n zeros (dashed grey: both endpoints).
     Filled: μ<sub>t</sub> along the geodesic. Red marks: zeros of μ<sub>t</sub>.
-    A network outputs smooth functions, so each geometry's output is blurred at scale ℓ, a simple stand-in for a network's limited resolution:
-    the transport map T for Wasserstein (what the learned velocity field integrates to), √μ for Fisher-Rao, and ψ for Fubini-Study.
-    At ℓ = 0 the geodesics are exact. Then the optimal map has infinite slope where the target vanishes, and the exact Wasserstein path has its zeros from the first instant;
-    no smooth velocity field can do that. For ℓ &gt; 0 a blurred map has finite slope, so μ<sub>t</sub> = μ<sub>0</sub>/T′ stays positive, and a blurred √μ stays positive too:
-    both show dips, never zeros (a smooth √μ could at most touch zero, which gives μ the wrong kind of zero). A blurred ψ still changes sign, so Fubini-Study keeps its zeros.</div>
+    ℓ: each geometry's output is blurred at scale ℓ, namely the transport map T for Wasserstein, √μ for Fisher-Rao and ψ for Fubini-Study. ℓ = 0: the exact geodesics.</div>
 </div>
 <script>
 (function () {

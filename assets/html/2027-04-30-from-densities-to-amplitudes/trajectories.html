@@ -164,10 +164,9 @@
         ga.moveTo(x0 + (x1 - x0) * j / m, y0 + (y1 - y0) * j / m); ga.lineTo(x0 + (x1 - x0) * (j + 1) / m, y0 + (y1 - y0) * (j + 1) / m); ga.stroke(); } }
     ga.restore();
     endDensity("d0", 0); endDensity("d1", NT - 1); endAmp("a0", 0); endAmp("a1", NT - 1); wheel();
-    $("note").textContent = "Samples follow dX = v dt, the one velocity field that carries μ(x,t) in one dimension: each keeps its quantile. "
-      + "The rainbow colours (wheel) show the phase of the amplitude only: red +, cyan −; the field fades out where |ψ| is small, and each "
-      + "sample is coloured by the phase where it is. The density panel's colour is just "
-      + "its height. The samples respond only to |ψ|, never to its phase.";
+    $("note").textContent = "Samples follow dX = v dt. "
+      + "The colour wheel shows the phase of the amplitude only: red +, cyan −; the field fades out where |ψ| is small, and each "
+      + "sample is coloured by the phase where it is. Density panel colour: √μ(x,t).";
   }
   $("preset").onchange = () => { if ($("preset").value === "packet" && +$("k").value === 0) $("k").value = 6;
     build(); render(); };

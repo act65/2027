@@ -58,8 +58,7 @@
   </div>
   <div class="note">Every point of the sphere is ψ = a·e₁ + b·e<sup>iγ</sup>e₂ with a = cos(ϑ/2) and b = sin(ϑ/2): height sets the weights a² and b², and longitude is the relative phase γ. The basis states e₁ and e₂ sit at the poles; choose them with the selector.
     ψ₀ and ψ₁ can be any two points, and the blue great circle between them is the Fubini-Study geodesic.
-    At each x, ψ(x) is the sum of two arrows, A = a·e₁(x) and B = b·e<sup>iγ</sup>e₂(x), and the density is the squared length of the sum: |A|² + |B|² + 2|A||B| cos Δ. Where the arrows line up the density grows; where they oppose it shrinks.
-    The cross term integrates to zero, since ∫ē₁e₂ = 0. Moving along a latitude changes γ, which turns every arrow B by the same angle.</div>
+    At the chosen x, the arrows are A = a·e₁(x) and B = b·e<sup>iγ</sup>e₂(x), Δ is the angle between them, and the density is |A + B|² = |A|² + |B|² + 2|A||B| cos Δ.</div>
 </div>
 <script>
 (function () {
@@ -89,13 +88,13 @@
   const SG = 0.7, sqNs = (m) => sqN(m, SG);
   const BASES = {
     sep: { label: "two separate bumps", d: 5.6, make() { const e1 = sqNs(-2.8); return { e1, ...gramSchmidt(e1, sqNs(2.8), zeros()) }; },
-      hint: "The source and a Gaussian target 8σ apart. They do not overlap, so this is the two-point case drawn on a line: the density is a two-bump mixture and the phase is invisible." },
+      hint: "e₁: the Gaussian source amplitude at x = −2.8. e₂: a Gaussian at x = +2.8, 8σ away, made orthogonal to e₁." },
     wave: { label: "a bump and a wave packet", d: 1.4, make() { const e1 = sqNs(-0.7), g = sqNs(0.7);
         return { e1, ...gramSchmidt(e1, g.map((v, i) => v * Math.cos(6 * xs[i])), g.map((v, i) => v * Math.sin(6 * xs[i]))) }; },
-      hint: "The source and the wave-packet target (k = 6). The packet's phase turns as x moves, so where they overlap the cross term alternates in sign and makes fringes (e₂ is the packet made orthogonal to e₁, a 10⁻⁴ correction)." },
+      hint: "e₁: the Gaussian source amplitude at x = −0.7. e₂: the wave packet, a Gaussian at x = +0.7 times e⁶ⁱˣ, made orthogonal to e₁, a change of order 10⁻⁴." },
     excited: { label: "a bump and a signed state", d: 1.4, make() { const e1 = sqNs(-0.7), t = xs.map((x) => (x - 0.7) * Math.exp(-((x - 0.7) ** 2) / (4 * SG * SG)));
         return { e1, ...gramSchmidt(e1, t, zeros()) }; },
-      hint: "The source and the signed target with one zero. Both are real and they overlap, so the relative phase decides which side gains density (e₂ is the target made orthogonal to e₁, which subtracts a copy of the bump)." },
+      hint: "e₁: the Gaussian source amplitude at x = −0.7. e₂: the signed target, (x − 0.7) times a Gaussian, with one zero at x = 0.7, made orthogonal to e₁ (which subtracts a copy of e₁)." },
   };
   const BASIS_ORDER = ["sep", "wave", "excited"];
   for (const k of BASIS_ORDER) { const b = BASES[k], m = b.make(); Object.assign(b, m);
