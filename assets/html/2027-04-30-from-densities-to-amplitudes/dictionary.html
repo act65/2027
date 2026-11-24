@@ -34,30 +34,30 @@
 <body>
 <div class="wrap">
   <div class="controls">
-    <label>endpoints <select id="preset">
-      <option value="gauss">two Gaussians</option>
-      <option value="ho">Gaussian → oscillator state n = 3</option>
-      <option value="packets">wave packets cos 3x → cos 6x</option></select></label>
+    <label>source ψ₀: a Gaussian · target ψ₁ <select id="preset">
+      <option value="gauss">a Gaussian</option>
+      <option value="packet">a wave packet (same density, with a winding phase)</option>
+      <option value="excited">a signed state with one zero</option></select></label>
     <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.5"><span class="val" id="tv"></span></label>
     <button id="play">play</button>
-    <label>show <select id="view"><option value="mu">density μₜ</option><option value="dot">regression target ∂ₜμₜ</option></select></label>
+    <label>show <select id="view"><option value="mu">density μₜ</option><option value="dot">regression target ∂μ/∂t</option></select></label>
     <label id="Ld">separation d <input id="d" type="range" min="0.5" max="6" step="0.05" value="3.5"><span class="val" id="dv"></span></label>
     <label id="Lk">target phase e<sup>ikx</sup>, k <input id="k" type="range" min="0" max="12" step="0.25" value="6"><span class="val" id="kv"></span></label>
   </div>
   <div class="grid">
-    <div class="lab"><b style="color:var(--w2)">Wasserstein</b><span>∂<sub>t</sub>μ + ∇·(μv) = 0</span></div>
+    <div class="lab"><b style="color:var(--w2)">Wasserstein</b><span>∂μ/∂t + ∇·(μv) = 0</span></div>
     <canvas id="c0"></canvas><div class="read" id="r0"></div>
-    <div class="lab"><b style="color:var(--mix)">Mixture (linear)</b><span>∂<sub>t</sub>μ = rμ, flat price</span></div>
+    <div class="lab"><b style="color:var(--mix)">Mixture (linear)</b><span>∂μ/∂t = rμ, flat price</span></div>
     <canvas id="c2"></canvas><div class="read" id="r2"></div>
-    <div class="lab"><b style="color:var(--fr)">Fisher–Rao</b><span>∂<sub>t</sub>μ = rμ</span></div>
+    <div class="lab"><b style="color:var(--fr)">Fisher-Rao</b><span>∂μ/∂t = rμ</span></div>
     <canvas id="c1"></canvas><div class="read" id="r1"></div>
-    <div class="lab fsrow"><b style="color:var(--fs)">Fubini–Study</b><span>∂<sub>t</sub>ψ = −iHψ, μ = |ψ|²</span></div>
+    <div class="lab fsrow"><b style="color:var(--fs)">Fubini-Study</b><span>∂ψ/∂t = −iHψ, μ = |ψ|²</span></div>
     <canvas id="c3" class="fsrow"></canvas><div class="read fsrow" id="r3"></div>
   </div>
-  <div class="note" id="note-dot" style="display:none">Filled: ∂<sub>t</sub>μ<sub>t</sub>, the change of density that the regression target ẋ<sub>t</sub> produces at this t (zero line in the middle; one vertical scale for all rows).
-    <span class="fsrow">Fubini–Study row, thin lines: the amplitude velocity ψ̇<sub>t</sub>, <span class="sw" style="background:var(--fs)"></span>Re <span class="sw" style="background:var(--im)"></span>Im.</span></div>
+  <div class="note" id="note-dot" style="display:none">Filled: ∂μ/∂t, the change of density that the regression target produces at this t (zero line in the middle; one vertical scale for all rows).
+    <span class="fsrow">Fubini-Study row, thin lines: the amplitude velocity ψ̇<sub>t</sub>, <span class="sw" style="background:var(--fs)"></span>Re <span class="sw" style="background:var(--im)"></span>Im.</span></div>
   <div class="note" id="note-mu">Filled: μ<sub>t</sub>; dashed grey: μ<sub>0</sub> and μ<sub>1</sub>; one vertical scale for all rows.
-    <span class="fsrow">Fubini–Study row, thin lines: <span class="sw" style="background:var(--fs)"></span>Re ψ<sub>t</sub><span class="sw" style="background:var(--im)"></span>Im ψ<sub>t</sub>.</span>
+    <span class="fsrow">Fubini-Study row, thin lines: <span class="sw" style="background:var(--fs)"></span>Re ψ<sub>t</sub><span class="sw" style="background:var(--im)"></span>Im ψ<sub>t</sub>.</span>
 </div>
 </div>
 <script>
@@ -70,13 +70,13 @@
   const gaussMu = (c, m = 1) => { const g = new Float64Array(N), z = m / Math.sqrt(2 * Math.PI * SIG * SIG);
     for (let i = 0; i < N; i++) g[i] = z * Math.exp(-0.5 * ((x[i] - c) / SIG) ** 2); return g; };
   const unit = (a) => { let s = 0; for (let i = 0; i < N; i++) s += a[i] * a[i]; s = Math.sqrt(s * dx); return a.map((v) => v / s); };
+  // the source is always the Gaussian amplitude at -d/2; the target sits at +d/2 and is a Gaussian (also for the wave packet,
+  // whose phase e^{ikx} is applied in build()) or a signed state with one zero, (x - c) times the Gaussian amplitude: signed, one zero at c
   function endpoints(preset, d) { // real (signed) amplitudes, unit L2 norm
-    if (preset === "gauss") return [gaussMu(-d / 2).map(Math.sqrt), gaussMu(d / 2).map(Math.sqrt)];
-    const a0 = new Float64Array(N), a1 = new Float64Array(N);
-    for (let i = 0; i < N; i++) { const X = x[i];
-      if (preset === "ho") { const g = Math.exp(-X * X / 2); a0[i] = g; a1[i] = (8 * X ** 3 - 12 * X) * g; }
-      else { const g = Math.exp(-X * X / 18); a0[i] = Math.cos(3 * X) * g; a1[i] = Math.cos(6 * X) * g; } }
-    return [unit(a0), unit(a1)];
+    const a0 = gaussMu(-d / 2).map(Math.sqrt);
+    if (preset !== "excited") return [a0, gaussMu(d / 2).map(Math.sqrt)];
+    const c = d / 2, a1 = x.map((X) => (X - c) * Math.exp(-((X - c) ** 2) / (4 * SIG * SIG)));
+    return [a0, unit(a1)];
   }
   const NU = 4000;
   function quantiles(m) { const C = new Float64Array(N + 1); for (let i = 0; i < N; i++) C[i + 1] = C[i] + m[i] * dx;
@@ -91,7 +91,7 @@
       Y = signed ? (v) => h / 2 - v / ymax * (h / 2 - p) : (v) => h - p - v / ymax * (h - 2 * p);
     if (signed) { g.beginPath(); g.moveTo(p, h / 2); g.lineTo(w - p, h / 2); g.strokeStyle = css("--grid"); g.lineWidth = 1; g.stroke(); }
     if (!ys) { g.fillStyle = css("--muted"); g.font = "12px system-ui, sans-serif"; g.textAlign = "center";
-      g.fillText("closed form only for two single bumps (choose “two Gaussians”)", w / 2, h / 2 + 4); return; }
+      g.fillText("not available for these endpoints", w / 2, h / 2 + 4); return; }
     for (const gh of ghosts) { g.beginPath(); for (let i = 0; i < N; i++) (i ? g.lineTo : g.moveTo).call(g, X(i), Y(gh[i]));
       g.strokeStyle = css("--ghost"); g.lineWidth = 1; g.setLineDash([3, 3]); g.stroke(); g.setLineDash([]); }
     if (waves) { const mid = h / 2, amax = waves.amax; g.globalAlpha = 0.7; g.lineWidth = 1;
@@ -106,7 +106,7 @@
 
   let S = null; // cached per (preset, d, k)
   function build() {
-    const preset = $("preset").value, d = +$("d").value, k = +$("k").value;
+    const preset = $("preset").value, d = +$("d").value, k = preset === "packet" ? +$("k").value : 0;
     const [a0, a1] = endpoints(preset, d);
     const m0 = a0.map((v) => v * v), m1 = a1.map((v) => v * v), s0 = a0.map(Math.abs), s1 = a1.map(Math.abs);
     let bc = 0; for (let i = 0; i < N; i++) bc += s0[i] * s1[i]; bc *= dx;
@@ -117,20 +117,48 @@
     for (let i = 0; i < N; i++) { const R = r1[i] * c - i1[i] * s, I = r1[i] * s + i1[i] * c; r1[i] = R; i1[i] = I; }
     const Q0 = quantiles(m0), Q1 = quantiles(m1); let W2 = 0; for (let u = 0; u < NU; u++) W2 += (Q0[u] - Q1[u]) ** 2;
     let L2 = 0; for (let i = 0; i < N; i++) L2 += (m1[i] - m0[i]) ** 2; L2 = Math.sqrt(L2 * dx);
-    S = { L2, preset, d, a0, r1, i1, m0, m1, s0, s1, bc: Math.min(1, bc), F: Math.min(1, F), Q0, Q1, W2: Math.sqrt(W2 / NU) };
-    $("Ld").classList.toggle("off", preset !== "gauss");
+    // cumulative distributions of the two endpoint densities (for the exact Wasserstein interpolation in rows())
+    const cum = (m) => { const C = new Float64Array(N); for (let i = 1; i < N; i++) C[i] = C[i - 1] + 0.5 * (m[i] + m[i - 1]) * dx; const z = C[N - 1]; return C.map((v) => v / z); };
+    const C0 = cum(m0), C1 = cum(m1);
+    // both quantile functions are piecewise linear in u, with breakpoints at the values of C0 and C1; on the merged breakpoints
+    // x_t(u) and the two densities are linear between neighbours, for every t, so rows() can invert x_t in one pass
+    const Qf = (C, m, u) => { let lo = 0, hi = N - 1; while (hi - lo > 1) { const md = (lo + hi) >> 1; if (C[md] <= u) lo = md; else hi = md; }
+      const dd = C[hi] - C[lo], f = dd > 0 ? (u - C[lo]) / dd : 0.5; return [x[lo] + f * dx, m[lo] * (1 - f) + m[hi] * f]; };
+    const Ub = Array.from(new Set([...C0, ...C1])).sort((a, b) => a - b), NB = Ub.length;
+    const B = { n: NB, q0x: new Float64Array(NB), q0p: new Float64Array(NB), q1x: new Float64Array(NB), q1p: new Float64Array(NB) };
+    for (let k = 0; k < NB; k++) { const a = Qf(C0, m0, Ub[k]), b = Qf(C1, m1, Ub[k]); B.q0x[k] = a[0]; B.q0p[k] = a[1]; B.q1x[k] = b[0]; B.q1p[k] = b[1]; }
+    S = { L2, preset, d, a0, r1, i1, m0, m1, s0, s1, bc: Math.min(1, bc), F: Math.min(1, F), Q0, Q1, B, W2: Math.sqrt(W2 / NU) };
+    // fixed vertical scales for this choice of endpoints: the max over the whole path (41 values of t) of every
+    // row that is shown, so nothing rescales while t moves (per-frame scales made the Wasserstein bump look like it dipped)
+    const showFS = $("c3").style.display !== "none", T41 = Array.from({ length: 41 }, (_, k) => k / 40), hD = 0.02;
+    let yMu = 0, yDot = 0, aMu = 0, aDot = 0;
+    for (const t of T41) { const R = rows(t, 0), A = rows(Math.max(0, t - hD), 0), B = rows(Math.min(1, t + hD), 0), dt = Math.min(1, t + hD) - Math.max(0, t - hD);
+      for (const key of showFS ? ["w2", "fr", "mix", "fs"] : ["w2", "fr", "mix"]) for (let i = 0; i < N; i++) {
+        yMu = Math.max(yMu, R[key][i]); yDot = Math.max(yDot, Math.abs(B[key][i] - A[key][i]) / dt); }
+      const [dp, dq] = dslerp(t, S.F);
+      for (let i = 0; i < N; i++) { aMu = Math.max(aMu, Math.abs(R.re[i]), Math.abs(R.im[i]));
+        aDot = Math.max(aDot, Math.abs(dp * a0[i] + dq * r1[i]), Math.abs(dq * i1[i])); } }
+    for (const m of [m0, m1]) for (const v of m) yMu = Math.max(yMu, v);
+    Object.assign(S, { yMu: yMu * 1.06, yDot: yDot * 1.06, aMu: aMu * 1.1, aDot: aDot * 1.1 });
+    $("Lk").style.display = preset === "packet" ? "" : "none";
   }
   function rows(t, l) {
     const { preset, d, a0, r1, i1, s0, s1, bc, F, Q0, Q1 } = S;
-    // Wasserstein: displacement interpolation of quantile functions, binned and lightly smoothed
-    const raw = new Float64Array(N);
-    for (let u = 0; u < NU; u++) { const j = Math.floor(((1 - t) * Q0[u] + t * Q1[u] - XL) / dx); if (j >= 0 && j < N) raw[j] += 1 / (NU * dx); }
-    const w2 = raw.map((_, i) => { let a = 0, wt = 0; for (let o = -2; o <= 2; o++) { const j = i + o; if (j >= 0 && j < N) { const q = 3 - Math.abs(o); a += q * raw[j]; wt += q; } } return a / wt; });
-    // Fisher–Rao: great circle between square roots
+    // Wasserstein: displacement interpolation, exact. A quantile level u sits at x_t(u) = (1-t) Q0(u) + t Q1(u), where the density is
+    // mu_t = mu0(Q0) mu1(Q1) / ((1-t) mu1(Q1) + t mu0(Q0)). Sample in OUTPUT space: for each grid x, find the u with x_t(u) = x (exactly,
+    // on the merged breakpoints from build()). Pushing source grid points forward and interpolating back fails where the map is steep.
+    const w2 = new Float64Array(N), { B } = S;
+    { let k = 0; const X = (i) => (1 - t) * B.q0x[i] + t * B.q1x[i], X0 = X(0), X1 = X(B.n - 1);
+      for (let j = 0; j < N; j++) { if (x[j] < X0 || x[j] > X1) continue;
+        while (k < B.n - 2 && X(k + 1) < x[j]) k++;
+        const xa = X(k), xb = X(k + 1), f = xb > xa ? (x[j] - xa) / (xb - xa) : 0.5;
+        const p0 = B.q0p[k] * (1 - f) + B.q0p[k + 1] * f, p1 = B.q1p[k] * (1 - f) + B.q1p[k + 1] * f, den = (1 - t) * p1 + t * p0;
+        w2[j] = den > 0 ? p0 * p1 / den : 0; } }
+    // Fisher-Rao: great circle between square roots
     const [a, b] = slerp(t, bc), fr = s0.map((v, i) => (a * v + b * s1[i]) ** 2);
     // Mixture: the straight line between the densities (flat L² price)
     const mix = S.m0.map((v, i) => (1 - t) * v + t * S.m1[i]);
-    // Fubini–Study: great circle between phase-aligned complex amplitudes
+    // Fubini-Study: great circle between phase-aligned complex amplitudes
     const [p, q] = slerp(t, F), re = a0.map((v, i) => p * v + q * r1[i]), im = i1.map((v) => q * v), fs = re.map((v, i) => v * v + im[i] * im[i]);
     return { w2, fr, mix, fs, re, im };
   }
@@ -144,17 +172,13 @@
     let { w2, fr, mix, fs, re, im } = R;
     if (dot) { // central difference in t of each row's density; FS thin lines show the amplitude velocity ψ̇_t
       const h = 0.02, t0 = Math.max(0, t - h), t1 = Math.min(1, t + h), A = rows(t0, l), B = rows(t1, l), D = (u, v) => u && v ? v.map((y, i) => (y - u[i]) / (t1 - t0)) : null;
-      // the binned Wasserstein row is quantised; smooth its derivative (triangle kernel, ±8 bins ≈ ±0.23)
-      const sm = (y, K) => y.map((_, i) => { let a = 0, wt = 0; for (let o = -K; o <= K; o++) { const j = i + o; if (j >= 0 && j < N) { const q = K + 1 - Math.abs(o); a += q * y[j]; wt += q; } } return a / wt; });
-      w2 = sm(D(A.w2, B.w2), 8); fr = D(A.fr, B.fr); mix = D(A.mix, B.mix); fs = D(A.fs, B.fs);
+      w2 = D(A.w2, B.w2); fr = D(A.fr, B.fr); mix = D(A.mix, B.mix); fs = D(A.fs, B.fs);
       const [dp, dq] = dslerp(t, F); re = a0.map((v, i) => dp * v + dq * r1[i]); im = i1.map((v) => dq * v);
-      let ymax = 0; for (const arr of [w2, fr, fs, mix]) for (const v of arr) ymax = Math.max(ymax, Math.abs(v)); ymax *= 1.06;
-      let amax = 0; for (let i = 0; i < N; i++) amax = Math.max(amax, Math.abs(re[i]), Math.abs(im[i])); amax *= 1.1;
+      const ymax = S.yDot, amax = S.aDot;
       draw($("c0"), w2, ymax, css("--w2"), [], null, true); draw($("c1"), fr, ymax, css("--fr"), [], null, true);
       draw($("c2"), mix, ymax, css("--mix"), [], null, true); draw($("c3"), fs, ymax, css("--fs"), [], { re, im, amax }, true);
     } else {
-    let ymax = 0; for (const arr of [w2, fr, fs, m0, m1, mix]) for (const v of arr) ymax = Math.max(ymax, v); ymax *= 1.06;
-    let amax = 0; for (let i = 0; i < N; i++) amax = Math.max(amax, Math.abs(re[i]), Math.abs(im[i])); amax *= 1.1;
+    const ymax = S.yMu, amax = S.aMu;
     const gh = [m0, m1];
     draw($("c0"), w2, ymax, css("--w2"), gh); draw($("c1"), fr, ymax, css("--fr"), gh);
     draw($("c2"), mix, ymax, css("--mix"), gh); draw($("c3"), fs, ymax, css("--fs"), gh, { re, im, amax });
@@ -172,12 +196,13 @@
   $("play").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "pause" : "play"; last = 0; if (playing) requestAnimationFrame(tick); };
   $("t").oninput = render; $("view").onchange = render;
   for (const id of ["d", "k"]) $(id).oninput = () => { build(); render(); };
-  $("preset").onchange = () => { $("k").value = $("preset").value === "gauss" ? 6 : 0; build(); render(); };
+  $("preset").onchange = () => { if ($("preset").value === "packet" && +$("k").value === 0) $("k").value = 6; build(); render(); };
   window.addEventListener("resize", render);
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
-  // URL options: ?rows=3 hides the Fubini–Study row (used before it is defined); ?d=..&k=..&t=.. set the sliders
+  // URL options: ?rows=3 hides the Fubini-Study row (used before it is defined); ?d=..&k=..&t=.. set the sliders
   const Q = new URLSearchParams(location.search);
   for (const id of ["d", "k", "t", "view"]) if (Q.has(id)) $(id).value = Q.get(id);
+  if (["gauss", "packet", "excited"].includes(Q.get("target"))) $("preset").value = Q.get("target");
   if (Q.get("rows") === "3") { document.querySelectorAll(".fsrow").forEach((el) => el.style.display = "none"); $("Lk").style.display = "none"; }
   build(); render();
 })();

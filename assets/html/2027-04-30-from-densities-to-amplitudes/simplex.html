@@ -81,7 +81,7 @@
   const Q = (s) => { const X = (-s[0] + s[2]) / Math.SQRT2, Y = (-s[0] + 2 * s[1] - s[2]) / Math.sqrt(6); return [Sg.cx + X * Sg.R, Sg.cy - (Y - 0.1195) * Sg.R]; };
   const Qm = (m) => Q(m.map((v) => Math.sqrt(Math.max(0, v))));
 
-  // unit ball boundary at μ: mixture (flat) or Fisher–Rao, as a list of μ points
+  // unit ball boundary at μ: mixture (flat) or Fisher-Rao, as a list of μ points
   function ball(m, kind) { const out = [];
     for (let k = 0; k <= 48; k++) { const f = 2 * Math.PI * k / 48, d = E1.map((v, i) => Math.cos(f) * v + Math.sin(f) * E2[i]);
       const n = kind === "fr" ? Math.sqrt(d.reduce((a, v, i) => a + v * v / m[i], 0)) : 1;
@@ -126,8 +126,8 @@
     const bc = dot(M0.map(Math.sqrt), M1.map(Math.sqrt)), l2 = Math.sqrt(M0.reduce((a, v, i) => a + (v - M1[i]) ** 2, 0));
     $("read").innerHTML =
       `<span class="sw" style="background:var(--mix)"></span>mixture: straight in μ, ‖μ₁ − μ₀‖ = <b>${l2.toFixed(2)}</b>; at t, μ = <b>${f3(mixAt(t))}</b><br>` +
-      `<span class="sw" style="background:var(--fr)"></span>Fisher–Rao: straight (a great circle) in √μ, d<sub>FR</sub> = 2 arccos BC = <b>${(2 * Math.acos(Math.min(1, bc))).toFixed(2)}</b>; at t, μ = <b>${f3(frAt(t))}</b><br>` +
-      (($("balls").checked) ? `Unit balls: <span class="sw" style="background:var(--mix)"></span>dashed, the same step size under the flat price; <span class="sw" style="background:var(--fr)"></span>solid, under Fisher–Rao. On the sphere every Fisher–Rao ball is the same round disc.` : "");
+      `<span class="sw" style="background:var(--fr)"></span>Fisher-Rao: straight (a great circle) in √μ, d<sub>FR</sub> = 2 arccos BC = <b>${(2 * Math.acos(Math.min(1, bc))).toFixed(2)}</b>; at t, μ = <b>${f3(frAt(t))}</b><br>` +
+      (($("balls").checked) ? `Unit balls: <span class="sw" style="background:var(--mix)"></span>dashed, the same step size under the flat price; <span class="sw" style="background:var(--fr)"></span>solid, under Fisher-Rao. On the sphere every Fisher-Rao ball is the same round disc.` : "");
   }
 
   // dragging endpoints on the triangle
