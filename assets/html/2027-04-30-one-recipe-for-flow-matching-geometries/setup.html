@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Three geodesics between Gaussians</title>
 <style>
-  :root { --bg:#fff; --fg:#1f2328; --muted:#6a737d; --grid:#e4e7eb; --panel:#fafbfc; --w2:#2ca02c; --fr:#ff7f0e; --mix:#9467bd; --ghost:#b8bec6; --end:#1f2328; }
+  :root { --bg:#fff; --fg:#1f2328; --muted:#6a737d; --grid:#e4e7eb; --panel:#fafbfc; --w2:#2ca02c; --fr:#ff7f0e; --mix:#9467bd; --ghost:#b8bec6; --end:#1f2328; --p0:#4a7fc1; --p1:#d4515f; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-    --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --w2:#5cc85c; --fr:#ffa04a; --mix:#b48ae0; --ghost:#4a525c; --end:#e6e8eb; } }
-  :root[data-theme="dark"] { --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --w2:#5cc85c; --fr:#ffa04a; --mix:#b48ae0; --ghost:#4a525c; --end:#e6e8eb; }
+    --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --w2:#5cc85c; --fr:#ffa04a; --mix:#b48ae0; --ghost:#4a525c; --end:#e6e8eb; --p0:#6f9fe0; --p1:#e8707c; } }
+  :root[data-theme="dark"] { --bg:#0f1115; --fg:#e6e8eb; --muted:#9aa4af; --grid:#2a2f37; --panel:#161a20; --w2:#5cc85c; --fr:#ffa04a; --mix:#b48ae0; --ghost:#4a525c; --end:#e6e8eb; --p0:#6f9fe0; --p1:#e8707c; }
   html,body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
   .wrap { max-width:1040px; margin:0 auto; padding:8px 16px 10px; box-sizing:border-box; }
   .controls { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-bottom:8px; }
@@ -39,7 +39,7 @@
 <body>
 <div class="wrap">
   <div class="controls">
-    <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.5"><span class="val" id="tv"></span></label>
+    <label>t <input id="t" type="range" min="0" max="1" step="any" value="0.5"><span class="val" id="tv"></span></label>
     <button id="play">play</button>
     <button id="reset">reset endpoints</button>
   </div>
@@ -49,7 +49,7 @@
       <canvas id="plane"></canvas>
     </div>
     <div>
-      <div class="cap"><b>μ<sub>t</sub> as a density on x</b> (dashed: μ₀ and μ₁)</div>
+      <div class="cap"><b>μ<sub>t</sub> as a density on x</b><span class="lg lg-dash" style="color:var(--p0)"></span>μ₀<span class="lg lg-dash" style="color:var(--p1)"></span>μ₁</div>
       <div class="row"><canvas id="dw"></canvas><div class="read" id="rw"></div></div>
       <div class="row"><canvas id="dm"></canvas><div class="read" id="rm"></div></div>
       <div class="row"><canvas id="df"></canvas><div class="read" id="rf"></div></div>
@@ -112,15 +112,15 @@
     // Wasserstein point
     const mw = (1 - t) * G.m0 + t * G.m1, sw = (1 - t) * G.s0 + t * G.s1; disc(g, X(mw), Y(sw), 6.5, css("--w2"), css("--bg"), 1.5);
     // endpoint handles
-    [[G.m0, G.s0, "μ₀"], [G.m1, G.s1, "μ₁"]].forEach(([m, s, lab], k) => { disc(g, X(m), Y(s), 4, css("--end"));
-      g.fillStyle = css("--end"); g.font = "bold 12px system-ui, sans-serif"; g.textAlign = k ? "left" : "right"; g.fillText(lab, X(m) + (k ? 1 : -1) * (R + 4), Y(s) + 4); });
+    [[G.m0, G.s0, "μ₀"], [G.m1, G.s1, "μ₁"]].forEach(([m, s, lab], k) => { disc(g, X(m), Y(s), 4, css(k ? "--p1" : "--p0"));
+      g.fillStyle = css(k ? "--p1" : "--p0"); g.font = "bold 12px system-ui, sans-serif"; g.textAlign = k ? "left" : "right"; g.fillText(lab, X(m) + (k ? 1 : -1) * (R + 4), Y(s) + 4); });
   }
   // ---- densities ----
   const NX = 400, XR = [-5, 5], xs = Array.from({ length: NX }, (_, i) => XR[0] + (XR[1] - XR[0]) * i / (NX - 1));
   function drawRow(id, ys, ymax, col, G) {
     const [g, w, h] = setup($(id)), p = 4, X = (x) => p + (x - XR[0]) / (XR[1] - XR[0]) * (w - 2 * p), Y = (v) => h - p - Math.min(1, v / ymax) * (h - 2 * p);
-    for (const [m, s] of [[G.m0, G.s0], [G.m1, G.s1]]) { g.beginPath(); xs.forEach((x, i) => (i ? g.lineTo : g.moveTo).call(g, X(x), Y(gauss(x, m, s))));
-      g.strokeStyle = css("--ghost"); g.lineWidth = 1; g.setLineDash([3, 3]); g.stroke(); g.setLineDash([]); }
+    for (const [m, s, c] of [[G.m0, G.s0, "--p0"], [G.m1, G.s1, "--p1"]]) { g.beginPath(); xs.forEach((x, i) => (i ? g.lineTo : g.moveTo).call(g, X(x), Y(gauss(x, m, s))));
+      g.strokeStyle = css(c); g.globalAlpha = 0.8; g.lineWidth = 1.3; g.setLineDash([4, 3]); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
     g.beginPath(); g.moveTo(X(XR[0]), Y(0)); xs.forEach((x, i) => g.lineTo(X(x), Y(ys[i]))); g.lineTo(X(XR[1]), Y(0));
     g.globalAlpha = 0.25; g.fillStyle = col; g.fill(); g.globalAlpha = 1;
     g.beginPath(); xs.forEach((x, i) => (i ? g.lineTo : g.moveTo).call(g, X(x), Y(ys[i]))); g.strokeStyle = col; g.lineWidth = 1.8; g.stroke();

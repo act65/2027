@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fubini-Study flow</title>
+<title>A Fubini-Study geodesic</title>
 <style>
   :root { --bg:#fff; --fg:#1f2328; --muted:#6a737d; --grid:#e4e7eb; --panel:#fafbfc; --fs:#1f77b4; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -37,12 +37,27 @@
   .lg-dot { width:9px; height:9px; border-radius:50%; background:currentColor; }
   .lg-ring { width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; }
   .lg-tri { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid currentColor; }
+  /* ---- shared look of every widget in this post (keep identical across widgets) ---- */
+  :root { --grid:#e4e7eb; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --grid:#2a2f37; } }
+  :root[data-theme="dark"] { --grid:#2a2f37; }
+  .wrap { max-width:1040px; padding:8px 16px 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-bottom:8px; font-size:14px; }
+  .controls label { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .controls input[type=range] { width:120px; }
+  select, button { font:inherit; font-size:13px; color:var(--fg); background:var(--panel); border:1px solid var(--grid); border-radius:6px; padding:3px 9px; cursor:pointer; }
+  canvas { box-sizing:border-box; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
+  canvas.wheel, .ahead canvas { background:none; border:0; border-radius:0; }
+  .cap, .ttl { font-size:12px; color:var(--muted); margin:0 0 3px; text-align:left; }
+  .cap b, .ttl b { color:var(--fg); font-weight:600; }
+  .note { font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .lgrow { margin:2px 0; } .lgrow > b:first-child { color:var(--fg); font-weight:600; margin-right:3px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="controls">
-    <label>source ψ₀: a Gaussian · target ψ₁ <select id="preset">
+    <label>end ψ₁ <select id="preset">
       <option value="packet">a wave packet</option>
       <option value="excited">a signed state with one zero</option>
       <option value="gauss">a Gaussian</option></select></label>
@@ -51,13 +66,13 @@
   </div>
   <div class="grid">
     <div class="col"><b class="ahead"><span class="t">Density μ(x,t) = |ψ(x,t)|²</span></b>
-      <div class="tag">source μ₀(x)</div><canvas id="d0" class="end"></canvas>
+      <div class="tag">start μ₀(x)</div><canvas id="d0" class="end"></canvas>
       <canvas id="df" class="flow"></canvas>
-      <div class="tag">target μ₁(x)</div><canvas id="d1" class="end"></canvas></div>
+      <div class="tag">end μ₁(x)</div><canvas id="d1" class="end"></canvas></div>
     <div class="col"><b class="ahead"><canvas id="wheel"></canvas><span class="t">Amplitude ψ(x,t)</span> <span>hue = phase, faded where |ψ| is small</span></b>
-      <div class="tag">source ψ₀(x)</div><canvas id="a0" class="end"></canvas>
+      <div class="tag">start ψ₀(x)</div><canvas id="a0" class="end"></canvas>
       <canvas id="af" class="flow"></canvas>
-      <div class="tag">target ψ₁(x)</div><canvas id="a1" class="end"></canvas></div>
+      <div class="tag">end ψ₁(x)</div><canvas id="a1" class="end"></canvas></div>
   </div>
   <div class="note" id="note"></div>
 </div>
@@ -98,17 +113,12 @@
       C[N] = 1; mu.push(m); Cg.push(C); re.push(R); im.push(I); }
     const lo = -d / 2 - 3.3 * SIG, hi = preset === "excited" ? d / 2 + 4.6 * SIG : d / 2 + 3.3 * SIG;
     S = { preset, F, mu, Cg, re, im, hmax, amax, lo, hi, img: {} };
-    S.ode = odePaths();
     $("Lk").style.display = preset === "packet" ? "" : "none";
     $("dv").textContent = d.toFixed(2); $("kv").textContent = (+$("k").value).toFixed(2);
   }
   function inv(C, u) { let lo = 0, hi = N; while (hi - lo > 1) { const md = (lo + hi) >> 1; if (C[md] <= u) lo = md; else hi = md; }
     const dd = C[hi] - C[lo], f = dd > 0 ? (u - C[lo]) / dd : 0.5; return XL + (lo + f) * dx; }
   function cdf(C, X) { const f = (X - XL) / dx; if (f <= 0) return 0; if (f >= N) return 1; const i = Math.floor(f); return C[i] + (C[i + 1] - C[i]) * (f - i); }
-  // ODE: in one dimension the continuity equation (zero flux at -infinity) has one velocity field, and its flow keeps each sample's
-  // quantile level fixed, so the trajectories are the quantile curves x(t) = F_t^{-1}(u), exactly
-  function odePaths() { const P = []; for (let m = 0; m < M; m++) { const u = (m + 0.5) / M, p = new Float64Array(NT);
-      for (let n = 0; n < NT; n++) p[n] = inv(S.Cg[n], u); P.push(p); } return P; }
 
   // colours
   const VIR = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
@@ -124,7 +134,7 @@
   const atX = (arr, X) => { const f = (X - XL) / dx - 0.5; if (f <= 0) return arr[0]; if (f >= N - 1) return arr[N - 1]; const i = Math.floor(f); return arr[i] + (arr[i + 1] - arr[i]) * (f - i); };
   const atT = (rows, tt, X) => { const n = Math.min(NT - 2, Math.floor(tt * (NT - 1))), f = tt * (NT - 1) - n; return (1 - f) * atX(rows[n], X) + f * atX(rows[n + 1], X); };
   const XP = (X, w) => PL + (X - S.lo) / (S.hi - S.lo) * (w - PL - PR);
-  // a flow panel: x across, t down (t = 0 at the top, under the source)
+  // a flow panel: x across, t down (t = 0 at the top, under the start)
   function flow(id, key, col) {
     const cv = $(id), [g, w, h, r] = setup(cv), pw = Math.round((w - PL - PR) * r), ph = Math.round(h * r), ik = key + ":" + pw + "x" + ph;
     if (!S.img[ik]) { const imd = g.createImageData(pw, ph);
@@ -153,29 +163,16 @@
       const c = hsv(a / 360, 1); g.fillStyle = `rgb(${c.map(Math.round).join(",")})`; g.fill(); }
     g.fillStyle = "#000"; g.font = "10px system-ui"; g.textAlign = "center"; }
   function render() {
-    const P = S.ode, sc = Math.sqrt(S.hmax);
-    const [g, w, h] = flow("df", "mu", (tt, X) => vir(Math.sqrt(Math.max(0, atT(S.mu, tt, X))) / sc));
-    g.save(); g.beginPath(); g.rect(PL, 0, w - PL - PR, h); g.clip(); g.strokeStyle = "rgba(255,255,255,0.85)"; g.lineWidth = 0.9;
-    for (const p of P) { g.beginPath(); for (let n = 0; n < NT; n++) { const X = XP(p[n], w), Y = n / (NT - 1) * h; n ? g.lineTo(X, Y) : g.moveTo(X, Y); } g.stroke(); }
-    g.restore();
-    // the amplitude at half strength, fading to the page background where |psi| is small (white in light mode, near black in dark),
-    // under the samples drawn in the full colour of the phase of psi where each one is
+    const sc = Math.sqrt(S.hmax);
+    flow("df", "mu", (tt, X) => vir(Math.sqrt(Math.max(0, atT(S.mu, tt, X))) / sc));
+    // the amplitude: hue = phase, fading to the page background where |psi| is small (white in light mode, near black in dark)
     const bgc = (() => { const c = css("--bg"), m = c.match(/^#([0-9a-f]{6})$/i); return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : [255, 255, 255]; })();
-    const [ga, wa, ha] = flow("af", "amp:" + bgc.join(","), (tt, X) => { const re = atT(S.re, tt, X), im = atT(S.im, tt, X), a = 0.5 * Math.min(1, Math.hypot(re, im) / S.amax),
+    flow("af", "amp:" + bgc.join(","), (tt, X) => { const re = atT(S.re, tt, X), im = atT(S.im, tt, X), a = Math.min(1, Math.hypot(re, im) / S.amax),
       h = hsv(Math.atan2(im, re) / (2 * Math.PI), 1); return h.map((v, k) => bgc[k] + (v - bgc[k]) * a); });
-    ga.save(); ga.beginPath(); ga.rect(PL, 0, wa - PL - PR, ha); ga.clip(); ga.lineWidth = 2; ga.lineCap = "round";
-    // each segment between two path times is cut into pieces about a pixel long, each coloured by the phase at its middle, so a
-    // sample that crosses a zero within one time step changes colour where it crosses, not at the end of the segment
-    for (const p of P) for (let n = 0; n < NT - 1; n++) {
-      const x0 = XP(p[n], wa), y0 = n / (NT - 1) * ha, x1 = XP(p[n + 1], wa), y1 = (n + 1) / (NT - 1) * ha, m = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
-      for (let j = 0; j < m; j++) { const f = (j + 0.5) / m, X = p[n] + (p[n + 1] - p[n]) * f, tt = (n + f) / (NT - 1), re = atT(S.re, tt, X), im = atT(S.im, tt, X);
-        ga.strokeStyle = rgb(hsv(Math.atan2(im, re) / (2 * Math.PI), 1)); ga.beginPath();
-        ga.moveTo(x0 + (x1 - x0) * j / m, y0 + (y1 - y0) * j / m); ga.lineTo(x0 + (x1 - x0) * (j + 1) / m, y0 + (y1 - y0) * (j + 1) / m); ga.stroke(); } }
-    ga.restore();
     endDensity("d0", 0); endDensity("d1", NT - 1); endAmp("a0", 0); endAmp("a1", NT - 1); wheel();
-    $("note").textContent = "Samples follow dX = v dt. "
-      + "The colour wheel shows the phase of the amplitude only: red +, cyan −; the field fades out where |ψ| is small, and each "
-      + "sample is coloured by the phase where it is. Density panel colour: √μ(x,t).";
+    $("note").innerHTML = `<div class="lgrow"><b>Endpoints:</b> start ψ₀, a Gaussian amplitude (top strips); end ψ₁, chosen above (bottom strips). Time runs down.</div>`
+      + `<div class="lgrow"><b>Left, density:</b> colour √μ(x, t), dark to bright.</div>`
+      + `<div class="lgrow"><b>Right, amplitude:</b> hue is the phase of ψ(x, t) (colour wheel: red +, cyan −), faded where |ψ| is small; the end strips show |ψ| as bar height in the same hues.</div>`;
   }
   $("preset").onchange = () => { if ($("preset").value === "packet" && +$("k").value === 0) $("k").value = 6;
     build(); render(); };

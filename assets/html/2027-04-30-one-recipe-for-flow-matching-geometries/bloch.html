@@ -42,10 +42,10 @@
 <body>
 <div class="wrap">
   <div class="controls">
-    <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.5"><span class="val" id="tv"></span></label>
+    <label>t <input id="t" type="range" min="0" max="1" step="any" value="0.5"><span class="val" id="tv"></span></label>
     <button id="play">play</button>
     <label>basis <select id="bsel"></select></label>
-    <button data-p="sbs" id="pole">the side-by-side path</button>
+    <button data-p="sbs" id="pole">the path of Figure 6</button>
     <button data-p="eq">equal weights, other phase</button>
     <button id="resetview">reset view</button>
   </div>
@@ -99,13 +99,13 @@
   const SG = 0.7, sqNs = (m) => sqN(m, SG);
   const BASES = {
     sep: { label: "two separate bumps", d: 5.6, make() { const e1 = sqNs(-2.8); return { e1, ...gramSchmidt(e1, sqNs(2.8), zeros()) }; },
-      hint: "e₁: the Gaussian source amplitude at x = −2.8. e₂: a Gaussian at x = +2.8, 8σ away, made orthogonal to e₁." },
+      hint: "e₁: the Gaussian start amplitude at x = −2.8. e₂: a Gaussian at x = +2.8, 8σ away, made orthogonal to e₁." },
     wave: { label: "a bump and a wave packet", d: 1.4, make() { const e1 = sqNs(-0.7), g = sqNs(0.7);
         return { e1, ...gramSchmidt(e1, g.map((v, i) => v * Math.cos(6 * xs[i])), g.map((v, i) => v * Math.sin(6 * xs[i]))) }; },
-      hint: "e₁: the Gaussian source amplitude at x = −0.7. e₂: the wave packet, a Gaussian at x = +0.7 times e⁶ⁱˣ, made orthogonal to e₁, a change of order 10⁻⁴." },
+      hint: "e₁: the Gaussian start amplitude at x = −0.7. e₂: the wave packet, a Gaussian at x = +0.7 times e⁶ⁱˣ, made orthogonal to e₁, a change of order 10⁻⁴." },
     excited: { label: "a bump and a signed state", d: 1.4, make() { const e1 = sqNs(-0.7), t = xs.map((x) => (x - 0.7) * Math.exp(-((x - 0.7) ** 2) / (4 * SG * SG)));
         return { e1, ...gramSchmidt(e1, t, zeros()) }; },
-      hint: "e₁: the Gaussian source amplitude at x = −0.7. e₂: the signed target, (x − 0.7) times a Gaussian, with one zero at x = 0.7, made orthogonal to e₁ (which subtracts a copy of e₁)." },
+      hint: "e₁: the Gaussian start amplitude at x = −0.7. e₂: the signed end, (x − 0.7) times a Gaussian, with one zero at x = 0.7, made orthogonal to e₁ (which subtracts a copy of e₁)." },
   };
   const BASIS_ORDER = ["sep", "wave", "excited"];
   for (const k of BASIS_ORDER) { const b = BASES[k], m = b.make(); Object.assign(b, m);

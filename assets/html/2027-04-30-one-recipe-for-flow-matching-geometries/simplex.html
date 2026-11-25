@@ -34,6 +34,21 @@
   .lg-dot { width:9px; height:9px; border-radius:50%; background:currentColor; }
   .lg-ring { width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; }
   .lg-tri { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid currentColor; }
+  /* ---- shared look of every widget in this post (keep identical across widgets) ---- */
+  :root { --grid:#e4e7eb; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --grid:#2a2f37; } }
+  :root[data-theme="dark"] { --grid:#2a2f37; }
+  .wrap { max-width:1040px; padding:8px 16px 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-bottom:8px; font-size:14px; }
+  .controls label { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .controls input[type=range] { width:120px; }
+  select, button { font:inherit; font-size:13px; color:var(--fg); background:var(--panel); border:1px solid var(--grid); border-radius:6px; padding:3px 9px; cursor:pointer; }
+  canvas { box-sizing:border-box; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
+  canvas.wheel, .ahead canvas { background:none; border:0; border-radius:0; }
+  .cap, .ttl { font-size:12px; color:var(--muted); margin:0 0 3px; text-align:left; }
+  .cap b, .ttl b { color:var(--fg); font-weight:600; }
+  .note { font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .lgrow { margin:2px 0; } .lgrow > b:first-child { color:var(--fg); font-weight:600; margin-right:3px; }
 </style>
 </head>
 <body>
@@ -128,9 +143,9 @@
     drawPanel($("tri"), (m) => P(m), false); drawPanel($("sph"), Qm, true);
     const bc = dot(M0.map(Math.sqrt), M1.map(Math.sqrt)), l2 = Math.sqrt(M0.reduce((a, v, i) => a + (v - M1[i]) ** 2, 0));
     $("read").innerHTML =
-      `<span class="lg lg-line" style="color:var(--mix)"></span>mixture: straight in μ, ‖μ₁ − μ₀‖ = <b>${l2.toFixed(2)}</b><br>` +
-      `<span class="lg lg-line" style="color:var(--fr)"></span>Fisher-Rao: straight (a great circle) in √μ, d<sub>FR</sub> = 2 arccos BC = <b>${(2 * Math.acos(Math.min(1, bc))).toFixed(2)}</b><br>` +
-      (($("balls").checked) ? `Unit balls: <span class="lg lg-dash" style="color:var(--mix)"></span>the same step size under the flat price; <span class="lg lg-line" style="color:var(--fr)"></span>under Fisher-Rao.` : "");
+      `<div class="lgrow"><b>Paths, both panels:</b> <span class="lg lg-line" style="color:var(--mix)"></span>mixture: straight in μ, ‖μ₁ − μ₀‖ = <b>${l2.toFixed(2)}</b>; ` +
+      `<span class="lg lg-line" style="color:var(--fr)"></span>Fisher-Rao: straight (a great circle) in √μ, d<sub>FR</sub> = 2 arccos BC = <b>${(2 * Math.acos(Math.min(1, bc))).toFixed(2)}</b>.</div>` +
+      (($("balls").checked) ? `<div class="lgrow"><b>Unit balls:</b> <span class="lg lg-dash" style="color:var(--mix)"></span>the same step size under the flat price; <span class="lg lg-line" style="color:var(--fr)"></span>under Fisher-Rao.</div>` : "");
   }
 
   // dragging endpoints on the triangle

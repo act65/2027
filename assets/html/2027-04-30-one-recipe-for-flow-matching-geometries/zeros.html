@@ -18,10 +18,10 @@
   .val { font-variant-numeric:tabular-nums; color:var(--muted); min-width:2.6em; display:inline-block; }
   .grid { display:grid; grid-template-columns:170px 1fr 120px; gap:6px 12px; align-items:center; }
   .lab b { display:block; } .lab span { font-size:12px; color:var(--muted); }
-  canvas { width:100%; height:110px; display:block; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
+  canvas { width:100%; height:124px; display:block; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
   .read { font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; } .read b { color:var(--fg); }
   .note { font-size:12.5px; color:var(--muted); margin-top:8px; }
-  @media (max-width:640px) { .grid { grid-template-columns:1fr; } canvas { height:96px; } }
+  @media (max-width:640px) { .grid { grid-template-columns:1fr; } canvas { height:110px; } }
   /* legend swatches, shared by every widget of this post: line, dashed line, filled area, outline, dot, ring, triangle */
   .lg { display:inline-block; vertical-align:middle; margin:0 4px 0 8px; box-sizing:border-box; }
   .lg-line { width:16px; height:0; border-top:2.5px solid currentColor; }
@@ -31,14 +31,29 @@
   .lg-dot { width:9px; height:9px; border-radius:50%; background:currentColor; }
   .lg-ring { width:9px; height:9px; border-radius:50%; border:1.5px solid currentColor; }
   .lg-tri { width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:9px solid currentColor; }
+  /* ---- shared look of every widget in this post (keep identical across widgets) ---- */
+  :root { --grid:#e4e7eb; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --grid:#2a2f37; } }
+  :root[data-theme="dark"] { --grid:#2a2f37; }
+  .wrap { max-width:1040px; padding:8px 16px 10px; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-bottom:8px; font-size:14px; }
+  .controls label { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .controls input[type=range] { width:120px; }
+  select, button { font:inherit; font-size:13px; color:var(--fg); background:var(--panel); border:1px solid var(--grid); border-radius:6px; padding:3px 9px; cursor:pointer; }
+  canvas { box-sizing:border-box; background:var(--panel); border:1px solid var(--grid); border-radius:4px; }
+  canvas.wheel, .ahead canvas { background:none; border:0; border-radius:0; }
+  .cap, .ttl { font-size:12px; color:var(--muted); margin:0 0 3px; text-align:left; }
+  .cap b, .ttl b { color:var(--fg); font-weight:600; }
+  .note { font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .lgrow { margin:2px 0; } .lgrow > b:first-child { color:var(--fg); font-weight:600; margin-right:3px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="controls">
-    <label>target <select id="n"><option value="1">one zero</option><option value="2" selected>two zeros</option><option value="3">three zeros</option></select></label>
+    <label>end <select id="n"><option value="1">one zero</option><option value="2" selected>two zeros</option><option value="3">three zeros</option></select></label>
     <label>network smoothness ℓ <input id="eps" type="range" min="0" max="0.4" step="0.01" value="0.05"><span class="val" id="ev"></span></label>
-    <label>t <input id="t" type="range" min="0" max="1" step="0.005" value="0.9"><span class="val" id="tv"></span></label>
+    <label>t <input id="t" type="range" min="0" max="1" step="any" value="0.9"><span class="val" id="tv"></span></label>
     <button id="play">play</button>
   </div>
   <div class="grid">
@@ -49,9 +64,11 @@
     <div class="lab"><b style="color:var(--fs)">Fubini-Study</b><span>ψ<sub>t</sub> = aψ<sub>0</sub> + bψ<sub>1</sub>; thin line: ψ<sub>t</sub></span></div>
     <canvas id="cs"></canvas><div class="read" id="rs"></div>
   </div>
-  <div class="note">Source: a Gaussian with no zeros, centred at x = 0.5. Target: |h<sub>n</sub>|², the n-th Hermite function squared, with n zeros.
-    <span class="lg lg-dash" style="color:var(--ghost)"></span>both endpoints <span class="lg lg-fill" style="color:var(--muted)"></span>μ<sub>t</sub> along the geodesic, in each row's colour <span class="lg lg-tri" style="color:var(--zero)"></span>zeros of μ<sub>t</sub>.
-    ℓ: each geometry's output is blurred at scale ℓ, namely the transport map T for Wasserstein, √μ for Fisher-Rao and ψ for Fubini-Study. ℓ = 0: the exact geodesics.</div>
+  <div class="note">
+    <div class="lgrow"><b>Endpoints:</b> start, a Gaussian with no zeros, centred at x = 0.5; end, |h<sub>n</sub>|², the n-th Hermite function squared, with n zeros.</div>
+    <div class="lgrow"><b>Each row:</b> <span class="lg lg-fill" style="color:var(--muted)"></span>μ<sub>t</sub> along the geodesic, in the row's colour; <span class="lg lg-dash" style="color:var(--ghost)"></span>both endpoints; <span class="lg lg-tri" style="color:var(--zero)"></span>zeros of μ<sub>t</sub>.</div>
+    <div class="lgrow"><b>Slider ℓ:</b> each geometry's output is blurred at scale ℓ: the transport map T for Wasserstein, √μ for Fisher-Rao and ψ for Fubini-Study. ℓ = 0 gives the exact geodesics.</div>
+  </div>
 </div>
 <script>
 (function () {
@@ -124,9 +141,13 @@
     if (cv.width !== Math.round(w * r) || cv.height !== Math.round(h * r)) { cv.width = Math.round(w * r); cv.height = Math.round(h * r); }
     const g = cv.getContext("2d"); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, w, h); return [g, w, h]; }
   const slerp = (t, c) => { const th = Math.acos(Math.max(-1, Math.min(1, c))); return th < 1e-9 ? [1 - t, t] : [Math.sin((1 - t) * th) / Math.sin(th), Math.sin(t * th) / Math.sin(th)]; };
+  // x-axis tick labels, shared by every widget of this post
+  const xTicks = (g, w, h, base, X, lo, hi, name) => { g.strokeStyle = css("--grid"); g.lineWidth = 1; g.beginPath(); g.moveTo(X(lo), base + 0.5); g.lineTo(X(hi), base + 0.5); g.stroke();
+    g.fillStyle = css("--muted"); g.font = "10px system-ui, sans-serif"; g.textAlign = "center"; const st = (hi - lo) > 9 ? 2 : 1;
+    for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) g.fillText(Math.abs(v) < 1e-9 ? (name || "x") + " = 0" : String(v), X(v), h - 3); };
   function panel(cv, curve, col, zeros, extra) {         // curve: [[x, mu], ...]
-    const [g, w, h] = setup(cv), p = 5, base = h - 14, X = (v) => p + (v + XV) / (2 * XV) * (w - 2 * p), Y = (v) => base - Math.min(1, v / S.ym) * (base - p);
-    g.strokeStyle = css("--grid"); g.lineWidth = 1; g.beginPath(); g.moveTo(p, base); g.lineTo(w - p, base); g.stroke();
+    const [g, w, h] = setup(cv), p = 5, base = h - 28, X = (v) => p + (v + XV) / (2 * XV) * (w - 2 * p), Y = (v) => base - Math.min(1, v / S.ym) * (base - p);
+    xTicks(g, w, h, base, X, -XV, XV);
     for (const m of [S.m0, S.m1]) { g.beginPath(); let on = false;
       for (let i = 0; i < N; i++) { if (Math.abs(x[i]) > XV) continue; on ? g.lineTo(X(x[i]), Y(m[i])) : g.moveTo(X(x[i]), Y(m[i])); on = true; }
       g.strokeStyle = css("--ghost"); g.setLineDash([3, 3]); g.stroke(); g.setLineDash([]); }
@@ -170,7 +191,7 @@
     $("rs").innerHTML = `zeros: <b>${fsz.length}</b>${fsz.length > inView(fsz) ? ` (${fsz.length - inView(fsz)} out of view)` : ""}`;
   }
   let playing = false, dir = 1, last = 0;
-  function tick(ts) { if (!playing) return; if (last) { let v = +$("t").value + dir * (ts - last) / 4000;
+  function tick(ts) { if (!playing) return; if (last) { let v = +$("t").value + dir * (ts - last) / 5000;
       if (v >= 1) { v = 1; dir = -1; } if (v <= 0) { v = 0; dir = 1; } $("t").value = v; render(); } last = ts; requestAnimationFrame(tick); }
   $("play").onclick = (e) => { playing = !playing; e.target.textContent = playing ? "pause" : "play"; last = 0; if (playing) requestAnimationFrame(tick); };
   // live updates; at most one rebuild per animation frame however fast the slider moves
