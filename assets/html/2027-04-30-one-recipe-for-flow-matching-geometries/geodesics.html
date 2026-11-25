@@ -70,7 +70,7 @@
   </div>
   <div class="note">
     <div class="lgrow"><b>Left, the plane:</b> each marker is a Gaussian component of μ<sub>t</sub> at the current t, with area proportional to its weight. <span class="lg lg-dot" style="color:var(--w2)"></span>Wasserstein: one component. <span class="lg lg-ring" style="color:var(--mix)"></span>Mixture: (1 − t)μ₀ + tμ₁, components at μ₀ and μ₁. <span class="lg lg-dot" style="color:var(--fr)"></span>Fisher-Rao: a²μ₀ + b²μ₁ + 2ab·BC·ν, components at μ₀, μ₁ and ν, the normalised √(μ₀μ₁).</div>
-    <div class="lgrow"><b>Right, three columns:</b> μ(x, t) over x for each geometry, time running down. Colour: √μ(x, t), dark to bright. White line: the current t. <span class="lg lg-fill" style="color:var(--p0)"></span>μ₀ (top) <span class="lg lg-fill" style="color:var(--p1)"></span>μ₁ (bottom).</div>
+    <div class="lgrow"><b>Right, three columns:</b> μ(x, t) over x for each geometry, time running down. Colour: √μ(x, t), dark to bright. White line: the current t, with μ<sub>t</sub>(x) drawn on it. <span class="lg lg-fill" style="color:var(--p0)"></span>μ₀ (top) <span class="lg lg-fill" style="color:var(--p1)"></span>μ₁ (bottom).</div>
   </div>
 </div>
 <script>
@@ -146,7 +146,11 @@
       H.img[ik] = imd; }
     g.putImageData(H.img[ik], x0, Math.round(r));
     g.fillStyle = css("--muted"); g.font = "10px system-ui, sans-serif"; g.textAlign = "right"; g.fillText("t = 0", PLG - 2, 11); g.fillText("0.5", PLG - 2, h / 2 + 3); g.fillText("1", PLG - 2, h - 3);
-    const y = 1 + t * (h - 2); g.strokeStyle = "rgba(255,255,255,0.9)"; g.lineWidth = 1.2; g.beginPath(); g.moveTo(PLG, y); g.lineTo(w - PRG, y); g.stroke(); }
+    const y = 1 + t * (h - 2); g.strokeStyle = "rgba(255,255,255,0.9)"; g.lineWidth = 1.2; g.beginPath(); g.moveTo(PLG, y); g.lineTo(w - PRG, y); g.stroke();
+    // mu_t over x, rising from the line: one scale for all three columns (a quarter of the panel at the tallest density)
+    const R = H.rows[k], ft = t * (NT - 1), n0 = Math.min(NT - 2, Math.floor(ft)), a = ft - n0, A = 0.25 * (h - 2) / H.hmax;
+    g.beginPath(); g.moveTo(XP(XL, w), y); xs.forEach((x, i) => g.lineTo(XP(x, w), y - A * ((1 - a) * R[n0][i] + a * R[n0 + 1][i]))); g.lineTo(XP(XR, w), y);
+    g.fillStyle = "rgba(255,255,255,0.18)"; g.fill(); g.strokeStyle = "rgba(255,255,255,0.85)"; g.lineWidth = 1.3; g.stroke(); }
   function endDensity(id, m, col) { const [g, w, h] = setup($(id)), ym = H.hmax * 1.05, b = h - 14;
     g.beginPath(); g.moveTo(XP(XL, w), b); xs.forEach((x, i) => g.lineTo(XP(x, w), b - m[i] / ym * (b - 3))); g.lineTo(XP(XR, w), b);
     g.globalAlpha = 0.25; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 1.5; g.stroke();
