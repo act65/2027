@@ -63,6 +63,8 @@
       <option value="gauss">a Gaussian</option></select></label>
     <label id="Ld">separation d <input id="d" type="range" min="0.5" max="6" step="0.05" value="1.4"><span class="val" id="dv"></span></label>
     <label id="Lk">phase e<sup>ikx</sup>, k <input id="k" type="range" min="0" max="12" step="0.25" value="6"><span class="val" id="kv"></span></label>
+    <label>t <input id="t" type="range" min="0" max="1" step="any" value="0.5"><span class="val" id="tv"></span></label>
+    <button id="play">play</button>
   </div>
   <div class="grid">
     <div class="col"><b class="ahead"><span class="t">Density μ(x,t) = |ψ(x,t)|²</span></b>
@@ -146,6 +148,15 @@
     g.fillStyle = css("--muted"); g.font = "10px system-ui, sans-serif"; g.textAlign = "right";
     g.fillText("t = 0", PL - 3, 10); g.fillText("0.5", PL - 3, h / 2 + 3); g.fillText("1", PL - 3, h - 2);
     return [g, w, h]; }
+  // the current time: a horizontal line at t, with the curve val(x) rising from it (a quarter of the panel at vmax)
+  function tline(g, w, h, t, val, vmax, col) { const y = Math.max(0.6, Math.min(h - 0.6, t * h)), A = 0.25 * h / vmax, n = Math.max(2, Math.round(w - PL - PR));
+    g.strokeStyle = col(0.9); g.lineWidth = 1.2; g.beginPath(); g.moveTo(PL, y); g.lineTo(w - PR, y); g.stroke();
+    g.beginPath(); g.moveTo(PL, y); for (let j = 0; j <= n; j++) { const px = PL + j / n * (w - PL - PR), X = S.lo + j / n * (S.hi - S.lo); g.lineTo(px, y - A * val(X)); } g.lineTo(w - PR, y);
+    g.fillStyle = col(0.18); g.fill(); g.strokeStyle = col(0.85); g.lineWidth = 1.3; g.stroke(); }
+  // a signed curve on the same line and scale (below the line where it is negative)
+  function tcurve(g, w, h, t, val, vmax, style, dash) { const y = Math.max(0.6, Math.min(h - 0.6, t * h)), A = 0.25 * h / vmax, n = Math.max(2, Math.round(w - PL - PR));
+    g.save(); g.setLineDash(dash); g.strokeStyle = style; g.lineWidth = 1.4; g.beginPath();
+    for (let j = 0; j <= n; j++) { const px = PL + j / n * (w - PL - PR), yy = y - A * val(S.lo + j / n * (S.hi - S.lo)); if (j) g.lineTo(px, yy); else g.moveTo(px, yy); } g.stroke(); g.restore(); }
   function axis(g, w, h, b) { g.strokeStyle = css("--grid"); g.lineWidth = 1; g.beginPath(); g.moveTo(PL, b + 0.5); g.lineTo(w - PR, b + 0.5); g.stroke();
     g.fillStyle = css("--muted"); g.font = "10px system-ui, sans-serif"; g.textAlign = "center"; const st = (S.hi - S.lo) > 7 ? 2 : 1;
     for (let v = Math.ceil(S.lo / st) * st; v <= S.hi; v += st) g.fillText(v === 0 ? "x = 0" : String(v), XP(v, w), h - 2); }
@@ -163,24 +174,35 @@
       const c = hsv(a / 360, 1); g.fillStyle = `rgb(${c.map(Math.round).join(",")})`; g.fill(); }
     g.fillStyle = "#000"; g.font = "10px system-ui"; g.textAlign = "center"; }
   function render() {
-    const sc = Math.sqrt(S.hmax);
-    flow("df", "mu", (tt, X) => vir(Math.sqrt(Math.max(0, atT(S.mu, tt, X))) / sc));
+    const sc = Math.sqrt(S.hmax), t = +$("t").value; $("tv").textContent = t.toFixed(2);
+    const [gd, wd, hd] = flow("df", "mu", (tt, X) => vir(Math.sqrt(Math.max(0, atT(S.mu, tt, X))) / sc));
     // the amplitude: hue = phase, fading to the page background where |psi| is small (white in light mode, near black in dark)
     const bgc = (() => { const c = css("--bg"), m = c.match(/^#([0-9a-f]{6})$/i); return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : [255, 255, 255]; })();
-    flow("af", "amp:" + bgc.join(","), (tt, X) => { const re = atT(S.re, tt, X), im = atT(S.im, tt, X), a = Math.min(1, Math.hypot(re, im) / S.amax),
+    tline(gd, wd, hd, t, (X) => Math.max(0, atT(S.mu, t, X)), S.hmax, (a) => `rgba(255,255,255,${a})`);
+    const [ga, wa, ha] = flow("af", "amp:" + bgc.join(","), (tt, X) => { const re = atT(S.re, tt, X), im = atT(S.im, tt, X), a = Math.min(1, Math.hypot(re, im) / S.amax),
       h = hsv(Math.atan2(im, re) / (2 * Math.PI), 1); return h.map((v, k) => bgc[k] + (v - bgc[k]) * a); });
+    const fgc = bgc[0] + bgc[1] + bgc[2] > 380 ? "0,0,0" : "255,255,255";
+    tline(ga, wa, ha, t, (X) => Math.hypot(atT(S.re, t, X), atT(S.im, t, X)), S.amax, (a) => `rgba(${fgc},${a * 0.45})`);
+    tcurve(ga, wa, ha, t, (X) => atT(S.re, t, X), S.amax, `rgba(${fgc},0.95)`, []);
+    tcurve(ga, wa, ha, t, (X) => atT(S.im, t, X), S.amax, `rgba(${fgc},0.95)`, [4, 3]);
     endDensity("d0", 0); endDensity("d1", NT - 1); endAmp("a0", 0); endAmp("a1", NT - 1); wheel();
     $("note").innerHTML = `<div class="lgrow"><b>Endpoints:</b> start ψ₀, a Gaussian amplitude (top strips); end ψ₁, chosen above (bottom strips). Time runs down.</div>`
-      + `<div class="lgrow"><b>Left, density:</b> colour √μ(x, t), dark to bright.</div>`
-      + `<div class="lgrow"><b>Right, amplitude:</b> hue is the phase of ψ(x, t) (colour wheel: red +, cyan −), faded where |ψ| is small; the end strips show |ψ| as bar height in the same hues.</div>`;
+      + `<div class="lgrow"><b>Left, density:</b> colour √μ(x, t), dark to bright; the line marks the current t, with μ(x, t) drawn on it.</div>`
+      + `<div class="lgrow"><b>Right, amplitude:</b> hue is the phase of ψ(x, t) (colour wheel: red +, cyan −), faded where |ψ| is small; the end strips show |ψ| as bar height in the same hues; the line marks the current t, with <span class="lg lg-line" style="color:var(--fg)"></span>Re ψ(x, t), <span class="lg lg-dash" style="color:var(--fg)"></span>Im ψ(x, t) and <span class="lg lg-fill" style="color:var(--fg)"></span>|ψ(x, t)| drawn on it.</div>`;
   }
   $("preset").onchange = () => { if ($("preset").value === "packet" && +$("k").value === 0) $("k").value = 6;
     build(); render(); };
   for (const id of ["d", "k"]) $(id).oninput = () => { build(); render(); };
+  $("t").oninput = render;
+  // play: back and forth between t = 0 and t = 1 until paused (the same in every widget of the post)
+  let playing = false, dir = 1, last = 0;
+  function tick(ts) { if (!playing) return; if (last) { let v = +$("t").value + dir * (ts - last) / 5000;
+      if (v >= 1) { v = 1; dir = -1; } if (v <= 0) { v = 0; dir = 1; } $("t").value = v; render(); } last = ts; requestAnimationFrame(tick); }
+  $("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "pause" : "play"; last = 0; if (playing) requestAnimationFrame(tick); };
   let rz = 0; window.addEventListener("resize", () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(render); });
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
   const Q = new URLSearchParams(location.search);
-  for (const id of ["d", "k"]) if (Q.has(id)) $(id).value = Q.get(id);
+  for (const id of ["d", "k", "t"]) if (Q.has(id)) $(id).value = Q.get(id);
   if (["gauss", "packet", "excited"].includes(Q.get("target"))) $("preset").value = Q.get("target");
   build(); render();
 })();
